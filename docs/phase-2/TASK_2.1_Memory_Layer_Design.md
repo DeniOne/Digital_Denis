@@ -12,10 +12,10 @@
 - [x] Создать backend/memory/models.py (SQLAlchemy)
 - [x] Создать backend/memory/short_term.py (Redis)
 - [x] Создать backend/memory/long_term.py (PostgreSQL)
-- [ ] Создать backend/memory/semantic.py (Vector DB) — v0.2
-- [ ] Миграции Alembic готовы
+- [x] Создать backend/memory/semantic.py (Vector DB) — v0.2
+- [x] Миграции Alembic готовы
 - [x] CRUD операции работают
-- [ ] Написать unit-тесты
+- [x] Написать unit-тесты
 
 ---
 
