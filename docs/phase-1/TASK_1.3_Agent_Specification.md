@@ -11,12 +11,12 @@
 
 - [x] Создать backend/agents/base.py
 - [x] Создать backend/agents/core_agent.py
-- [ ] Создать backend/agents/analyst_agent.py (v0.2)
-- [ ] Создать backend/agents/operator_agent.py (v0.2)
+- [x] Создать backend/agents/analyst_agent.py (v0.2)
+- [x] Создать backend/agents/operator_agent.py (v0.2)
 - [x] Создать backend/agents/memory_agent.py
-- [ ] Создать backend/agents/meta_analyst.py (v1.0)
+- [x] Создать backend/agents/meta_analyst.py (v1.0)
 - [x] Все агенты следуют BaseAgent интерфейсу
-- [ ] Написать unit-тесты для каждого агента
+- [x] Написать unit-тесты для каждого агента
 
 ---
 
