@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации (v1.0)
 
-- [ ] Создать backend/analytics/logic.py
-- [ ] Реализовать LogicAnalyzer
-- [ ] Реализовать extract_structure() с LLM
-- [ ] Реализовать validate_logic()
-- [ ] Создать таблицу cal_decision_analysis
-- [ ] API endpoint /analytics/decisions/{id}
-- [ ] Написать unit-тесты
+- [x] Создать backend/analytics/logic.py
+- [x] Реализовать LogicAnalyzer
+- [x] Реализовать extract_structure() с LLM
+- [x] Реализовать validate_logic()
+- [x] Создать таблицу cal_decision_analysis
+- [x] API endpoint /analytics/decisions/{id}
+- [x] Написать unit-тесты
 
 ---
 
