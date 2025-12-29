@@ -1,0 +1,122 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# DIGITAL DENIS — Default Topic Hierarchy
+# ═══════════════════════════════════════════════════════════════════════════
+
+topics:
+  - name: "Стратегия"
+    slug: "strategy"
+    description: "Долгосрочное планирование, видение, цели"
+    keywords: ["стратегия", "видение", "миссия", "цели", "планы"]
+    children:
+      - name: "Видение"
+        slug: "vision"
+        description: "Долгосрочное видение и миссия"
+        keywords: ["видение", "миссия", "будущее"]
+      - name: "Цели"
+        slug: "goals"
+        description: "Стратегические и тактические цели"
+        keywords: ["цели", "okr", "kpi", "метрики"]
+      - name: "Планирование"
+        slug: "planning"
+        description: "Планы и роадмапы"
+        keywords: ["план", "роадмап", "этапы"]
+        
+  - name: "Финансы"
+    slug: "finance"
+    description: "Финансовые вопросы и экономика"
+    keywords: ["финансы", "деньги", "бюджет", "прибыль"]
+    children:
+      - name: "Бюджет"
+        slug: "budget"
+        description: "Бюджетирование и контроль расходов"
+        keywords: ["бюджет", "расходы", "затраты"]
+      - name: "Выручка"
+        slug: "revenue"
+        description: "Доходы и выручка"
+        keywords: ["выручка", "доход", "продажи"]
+      - name: "Инвестиции"
+        slug: "investments"
+        description: "Инвестиции и вложения"
+        keywords: ["инвестиции", "вложения", "roi"]
+        
+  - name: "Команда"
+    slug: "hr"
+    description: "Персонал, команда, HR"
+    keywords: ["команда", "сотрудники", "персонал", "hr"]
+    children:
+      - name: "Найм"
+        slug: "hiring"
+        description: "Рекрутинг и найм"
+        keywords: ["найм", "вакансия", "кандидат"]
+      - name: "Обучение"
+        slug: "training"
+        description: "Обучение и развитие"
+        keywords: ["обучение", "тренинг", "развитие"]
+      - name: "Мотивация"
+        slug: "motivation"
+        description: "Мотивация и вовлечённость"
+        keywords: ["мотивация", "кпи", "премия"]
+      - name: "KPI"
+        slug: "kpi"
+        description: "Показатели эффективности"
+        keywords: ["kpi", "метрики", "оценка"]
+        
+  - name: "Операции"
+    slug: "operations"
+    description: "Операционная деятельность"
+    keywords: ["операции", "процессы", "работа"]
+    children:
+      - name: "Процессы"
+        slug: "processes"
+        description: "Бизнес-процессы"
+        keywords: ["процесс", "регламент", "инструкция"]
+      - name: "Качество"
+        slug: "quality"
+        description: "Контроль качества"
+        keywords: ["качество", "стандарт", "контроль"]
+      - name: "Эффективность"
+        slug: "efficiency"
+        description: "Оптимизация и эффективность"
+        keywords: ["эффективность", "оптимизация", "автоматизация"]
+        
+  - name: "Продукт"
+    slug: "product"
+    description: "Продукт и разработка"
+    keywords: ["продукт", "разработка", "фичи"]
+    children:
+      - name: "Разработка"
+        slug: "development"
+        description: "Техническая разработка"
+        keywords: ["разработка", "код", "технологии"]
+      - name: "Фичи"
+        slug: "features"
+        description: "Функциональность"
+        keywords: ["фичи", "функции", "возможности"]
+        
+  - name: "Маркетинг"
+    slug: "marketing"
+    description: "Маркетинг и продвижение"
+    keywords: ["маркетинг", "реклама", "бренд"]
+    children:
+      - name: "Продвижение"
+        slug: "promotion"
+        description: "Рекламные кампании"
+        keywords: ["реклама", "продвижение", "кампания"]
+      - name: "Бренд"
+        slug: "brand"
+        description: "Бренд и позиционирование"
+        keywords: ["бренд", "позиционирование", "имидж"]
+
+  - name: "Личное"
+    slug: "personal"
+    description: "Личные заметки и рефлексия"
+    keywords: ["личное", "мысли", "идея"]
+    children:
+      - name: "Инсайты"
+        slug: "insights"
+        description: "Озарения и выводы"
+        keywords: ["инсайт", "понял", "осознал"]
+      - name: "Рефлексия"
+        slug: "reflection"
+        description: "Самоанализ"
+        keywords: ["рефлексия", "анализ", "выводы"]
