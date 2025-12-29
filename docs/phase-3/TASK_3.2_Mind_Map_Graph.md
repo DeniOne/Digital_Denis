@@ -9,12 +9,12 @@
 
 ## 📋 Чеклист реализации (v1.0)
 
-- [ ] Создать backend/analytics/graphs.py
-- [ ] Реализовать GraphBuilder
-- [ ] Создать таблицы graph_nodes, graph_edges
-- [ ] Реализовать find_connections() с LLM
-- [ ] API endpoint /graph
-- [ ] Написать unit-тесты
+- [x] Создать backend/analytics/graphs.py
+- [x] Реализовать GraphBuilder
+- [x] Создать таблицы graph_nodes, graph_edges
+- [x] Реализовать find_connections() с LLM
+- [x] API endpoint /graph
+- [x] Написать unit-тесты
 
 ---
 
