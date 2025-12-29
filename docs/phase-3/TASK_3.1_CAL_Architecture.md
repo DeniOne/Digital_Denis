@@ -9,12 +9,12 @@
 
 ## 📋 Чеклист реализации (v1.0)
 
-- [ ] Создать backend/analytics/__init__.py
-- [ ] Настроить Celery workers для CAL
-- [ ] Реализовать CALService
-- [ ] Создать таблицы cal_* в PostgreSQL
-- [ ] Интеграция с Memory Layer (hooks)
-- [ ] Написать integration-тесты
+- [x] Создать backend/analytics/__init__.py
+- [x] Настроить Celery workers для CAL
+- [x] Реализовать CALService
+- [x] Создать таблицы cal_* в PostgreSQL
+- [x] Интеграция с Memory Layer (hooks)
+- [x] Написать integration-тесты
 
 ---
 
