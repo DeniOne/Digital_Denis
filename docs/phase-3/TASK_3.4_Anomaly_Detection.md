@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации (v1.0)
 
-- [ ] Создать backend/analytics/anomalies.py
-- [ ] Реализовать AnomalyDetector
-- [ ] Реализовать baseline calculation
-- [ ] Создать таблицу cal_anomalies
-- [ ] Celery task detect_anomalies (hourly)
-- [ ] API endpoint /analytics/anomalies
-- [ ] Написать unit-тесты
+- [x] Создать backend/analytics/anomalies.py
+- [x] Реализовать AnomalyDetector
+- [x] Реализовать baseline calculation
+- [x] Создать таблицу cal_anomalies
+- [x] Celery task detect_anomalies (hourly)
+- [x] API endpoint /analytics/anomalies
+- [x] Написать unit-тесты
 
 ---
 
