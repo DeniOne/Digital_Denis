@@ -1,167 +1,252 @@
-"use client";
+/**
+ * Digital Denis — Dashboard Page (Main)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  PlusCircle,
-  ArrowUpRight,
-  Zap,
-  Brain,
-  History,
-  TrendingUp,
-  AlertCircle
-} from "lucide-react";
-import { memoryApi } from "@/lib/api";
-import { cn } from "@/lib/utils";
+'use client';
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    decisions: 0,
-    insights: 0,
-    anomalies: 0,
-    mentalLoad: "Low"
-  });
+import Link from 'next/link';
+import { useMemories, useTopicTrends, useAnomalies, useCognitiveHealth } from '@/lib/hooks';
+import type { MemoryItem, Anomaly, TopicTrend } from '@/lib/api';
+
+function StatCard({ icon, value, label, trend }: { icon: string; value: string | number; label: string; trend?: string }) {
+  return (
+    <div className="bg-zinc-900 rounded-xl p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-2xl">{icon}</span>
+        <div className="text-2xl font-bold">{value}</div>
+        {trend && (
+          <span className={`text-xs px-1.5 py-0.5 rounded ${trend.startsWith('+') ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+            }`}>
+            {trend}
+          </span>
+        )}
+      </div>
+      <div className="text-sm text-zinc-400">{label}</div>
+    </div>
+  );
+}
+
+function MemoryCard({ item }: { item: MemoryItem }) {
+  const typeIcons: Record<string, string> = {
+    decision: '✅',
+    insight: '💎',
+    fact: '📌',
+    thought: '💭',
+  };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">
-          Добро пожаловать, Профессионал.
-        </h1>
-        <p className="text-zinc-500 text-lg">
-          Система Digital Denis активна. Когнитивный слой синхронизирован.
-        </p>
+    <div className="bg-zinc-800 rounded-lg p-4 hover:bg-zinc-750 transition-colors">
+      <div className="flex items-start gap-3">
+        <span className="text-lg">{typeIcons[item.item_type] || '📄'}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium line-clamp-2">{item.content}</p>
+          <div className="flex items-center gap-2 mt-2 text-xs text-zinc-500">
+            <span>{new Date(item.created_at).toLocaleDateString()}</span>
+            {item.confidence && (
+              <span className="bg-zinc-700 px-1.5 py-0.5 rounded">
+                {Math.round(item.confidence * 100)}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnomalyAlert({ anomaly }: { anomaly: Anomaly }) {
+  const severityColors: Record<string, string> = {
+    low: 'border-green-500/30 bg-green-500/5',
+    medium: 'border-yellow-500/30 bg-yellow-500/5',
+    high: 'border-orange-500/30 bg-orange-500/5',
+    critical: 'border-red-500/30 bg-red-500/5',
+  };
+
+  const severityIcons: Record<string, string> = {
+    low: '🟢',
+    medium: '🟡',
+    high: '🟠',
+    critical: '🔴',
+  };
+
+  return (
+    <div className={`border rounded-xl p-4 ${severityColors[anomaly.severity] || severityColors.medium}`}>
+      <div className="flex items-start gap-3">
+        <span className="text-lg">{severityIcons[anomaly.severity]}</span>
+        <div className="flex-1">
+          <h4 className="font-medium">{anomaly.title}</h4>
+          <p className="text-sm text-zinc-400 mt-1">{anomaly.interpretation}</p>
+          <div className="flex gap-2 mt-3">
+            <Link
+              href="/health"
+              className="text-xs px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+            >
+              View Details
+            </Link>
+            <button className="text-xs px-3 py-1.5 text-zinc-500 hover:text-white transition-colors">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const { data: health } = useCognitiveHealth();
+  const { data: memoriesData } = useMemories({ limit: 5, offset: 0, item_type: 'decision' });
+  const { data: insightsData } = useMemories({ limit: 5, offset: 0, item_type: 'insight' });
+  const { data: anomalies } = useAnomalies('new');
+  const { data: trends } = useTopicTrends();
+
+  const decisions = memoriesData?.items || [];
+  const insights = insightsData?.items || [];
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Welcome back, Denis</h1>
+        <p className="text-zinc-400 mt-1">Here&apos;s your cognitive overview</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          title="Решения"
-          value="12"
-          sub="За последние 7 дней"
-          icon={Zap}
-          color="text-blue-500"
-          bg="bg-blue-500/10"
+          icon="🧠"
+          value={health?.total_memories || 0}
+          label="Total Memories"
         />
         <StatCard
-          title="Инсайты"
-          value="48"
-          sub="+12% к прошлой неделе"
-          icon={Brain}
-          color="text-purple-500"
-          bg="bg-purple-500/10"
+          icon="✅"
+          value={decisions.length}
+          label="Decisions (recent)"
         />
         <StatCard
-          title="Аномалии"
-          value="2"
-          sub="Требуют внимания"
-          icon={AlertCircle}
-          color="text-orange-500"
-          bg="bg-orange-500/10"
+          icon="🏷️"
+          value={health?.active_topics || 0}
+          label="Active Topics"
         />
         <StatCard
-          title="Когнит. нагрузка"
-          value="Низкая"
-          sub="Оптимальное состояние"
-          icon={TrendingUp}
-          color="text-emerald-500"
-          bg="bg-emerald-500/10"
+          icon="💚"
+          value={health?.overall_score ? `${Math.round(health.overall_score * 100)}%` : '--'}
+          label="Health Score"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Memory */}
-        <div className="lg:col-span-2 rounded-3xl bg-[#0a0a0a]/50 border border-white/5 p-8 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <History className="text-zinc-400" />
-              <h2 className="text-xl font-semibold">Последние записи памяти</h2>
-            </div>
-            <Link href="/memory" className="text-zinc-500 hover:text-white transition-colors flex items-center gap-1 text-sm font-medium">
-              Смотреть все <ArrowUpRight size={16} />
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            <MemoryStub
-              type="Decision"
-              title="Переход на многослойную архитектуру памяти"
-              date="2 часа назад"
-            />
-            <MemoryStub
-              type="Insight"
-              title="Корреляция между временем отдыха и качеством логики"
-              date="Вчера"
-            />
-            <MemoryStub
-              type="Fact"
-              title="Текущий стек: FastAPI + Next.js + PostgreSQL"
-              date="29 Дек"
-            />
+      {/* Active Topics */}
+      {trends && trends.length > 0 && (
+        <div className="bg-zinc-900 rounded-xl p-4">
+          <h3 className="font-semibold mb-3">Active Topics</h3>
+          <div className="flex flex-wrap gap-2">
+            {trends.slice(0, 6).map((trend: TopicTrend) => (
+              <Link
+                key={trend.topic_id}
+                href={`/topics?id=${trend.topic_id}`}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${trend.change_percent > 20
+                    ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30'
+                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                  }`}
+              >
+                {trend.topic_name}
+                {trend.change_percent > 20 && ' 🔥'}
+              </Link>
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Action Panel */}
-        <div className="rounded-3xl bg-gradient-to-b from-blue-600/10 to-transparent border border-blue-500/10 p-8">
-          <h2 className="text-xl font-semibold mb-6 flex items-center gap-3">
-            <PlusCircle className="text-blue-500" />
-            Быстрые действия
-          </h2>
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Decisions */}
+        <div className="bg-zinc-900 rounded-xl p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">📈 Recent Decisions</h3>
+            <Link href="/memory?type=decision" className="text-sm text-blue-400 hover:underline">
+              View all
+            </Link>
+          </div>
           <div className="space-y-3">
-            <Link href="/chat" className="block">
-              <ActionButton label="Зафиксировать решение" />
+            {decisions.length > 0 ? (
+              decisions.map((item: MemoryItem) => (
+                <MemoryCard key={item.id} item={item} />
+              ))
+            ) : (
+              <p className="text-zinc-500 text-sm">No recent decisions</p>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Insights */}
+        <div className="bg-zinc-900 rounded-xl p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">💡 Recent Insights</h3>
+            <Link href="/memory?type=insight" className="text-sm text-blue-400 hover:underline">
+              View all
             </Link>
-            <Link href="/chat" className="block">
-              <ActionButton label="Начать сессию анализа" primary />
-            </Link>
-            <Link href="/chat" className="block">
-              <ActionButton label="Задать вопрос системе" />
-            </Link>
+          </div>
+          <div className="space-y-3">
+            {insights.length > 0 ? (
+              insights.map((item: MemoryItem) => (
+                <MemoryCard key={item.id} item={item} />
+              ))
+            ) : (
+              <p className="text-zinc-500 text-sm">No recent insights</p>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function StatCard({ title, value, sub, icon: Icon, color, bg }: any) {
-  return (
-    <div className="p-6 rounded-3xl bg-[#0a0a0a]/50 border border-white/5 hover:border-white/10 transition-all group">
-      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", bg)}>
-        <Icon size={24} className={color} />
+      {/* Anomaly Alerts */}
+      {anomalies && anomalies.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="font-semibold">⚠️ Anomaly Alerts</h3>
+          {anomalies.slice(0, 2).map((anomaly: Anomaly) => (
+            <AnomalyAlert key={anomaly.id} anomaly={anomaly} />
+          ))}
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link
+          href="/chat"
+          className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 hover:border-blue-400/50 transition-colors"
+        >
+          <span className="text-2xl">💬</span>
+          <p className="font-medium mt-2">Start Chat</p>
+          <p className="text-xs text-zinc-400">Talk to Digital Denis</p>
+        </Link>
+
+        <Link
+          href="/memory"
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
+        >
+          <span className="text-2xl">🔍</span>
+          <p className="font-medium mt-2">Search Memory</p>
+          <p className="text-xs text-zinc-400">Find past thoughts</p>
+        </Link>
+
+        <Link
+          href="/mindmap"
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
+        >
+          <span className="text-2xl">🗺️</span>
+          <p className="font-medium mt-2">Mind Map</p>
+          <p className="text-xs text-zinc-400">Visualize connections</p>
+        </Link>
+
+        <Link
+          href="/health"
+          className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
+        >
+          <span className="text-2xl">📊</span>
+          <p className="font-medium mt-2">Health Report</p>
+          <p className="text-xs text-zinc-400">Check cognitive health</p>
+        </Link>
       </div>
-      <div className="text-zinc-500 text-sm font-medium mb-1">{title}</div>
-      <div className="text-2xl font-bold mb-1">{value}</div>
-      <div className="text-zinc-600 text-xs">{sub}</div>
     </div>
-  );
-}
-
-function MemoryStub({ type, title, date }: any) {
-  return (
-    <div className="p-4 rounded-2xl bg-white/5 border border-transparent hover:border-white/5 hover:bg-white/10 transition-all cursor-pointer flex items-center gap-4">
-      <div className={cn(
-        "px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider",
-        type === 'Decision' ? "bg-blue-500/20 text-blue-400" : "bg-purple-500/20 text-purple-400"
-      )}>
-        {type}
-      </div>
-      <div className="flex-1 font-medium truncate">{title}</div>
-      <div className="text-zinc-600 text-xs whitespace-nowrap">{date}</div>
-    </div>
-  );
-}
-
-function ActionButton({ label, primary }: any) {
-  return (
-    <button className={cn(
-      "w-full py-3 px-4 rounded-xl font-medium transition-all text-sm",
-      primary
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500"
-        : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10"
-    )}>
-      {label}
-    </button>
   );
 }

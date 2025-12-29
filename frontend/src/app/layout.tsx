@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import { Shell } from "@/components/layout";
+import { Providers } from "@/lib/providers";
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
@@ -18,15 +19,14 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.className} bg-[#050505] text-white antialiased`}
+        className={`${inter.className} bg-zinc-950 text-white antialiased`}
         suppressHydrationWarning
       >
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#111] p-6 lg:p-10">
+        <Providers>
+          <Shell>
             {children}
-          </main>
-        </div>
+          </Shell>
+        </Providers>
       </body>
     </html>
   );

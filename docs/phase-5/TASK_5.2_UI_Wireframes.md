@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации
 
-- [ ] Создать app/page.tsx (Dashboard)
-- [ ] Создать app/memory/page.tsx
-- [ ] Создать app/topics/page.tsx
-- [ ] Создать app/mindmap/page.tsx (v1.0)
-- [ ] Создать app/health/page.tsx (v1.0)
-- [ ] Sidebar и Header компоненты
-- [ ] Все страницы соответствуют wireframes
+- [x] Создать app/page.tsx (Dashboard)
+- [x] Создать app/memory/page.tsx
+- [x] Создать app/topics/page.tsx
+- [x] Создать app/mindmap/page.tsx (v1.0)
+- [x] Создать app/health/page.tsx (v1.0)
+- [x] Sidebar и Header компоненты
+- [x] Все страницы соответствуют wireframes
 
 ---
 
