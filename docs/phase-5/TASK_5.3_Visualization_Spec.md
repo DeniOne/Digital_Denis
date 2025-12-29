@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации (v1.0)
 
-- [ ] Установить cytoscape.js
-- [ ] Создать components/graphs/MindMapGraph.tsx
-- [ ] Установить recharts
-- [ ] Создать components/analytics/TrendChart.tsx
-- [ ] Создать components/analytics/HealthScore.tsx
-- [ ] Создать Heatmap компонент (D3.js)
-- [ ] Интерактивность графа работает
+- [x] Установить cytoscape.js
+- [x] Создать components/graphs/MindMapGraph.tsx
+- [x] Установить recharts
+- [x] Создать components/analytics/TrendChart.tsx
+- [x] Создать components/analytics/HealthScore.tsx
+- [x] Создать Heatmap компонент (D3.js)
+- [x] Интерактивность графа работает
 
 ---
 
