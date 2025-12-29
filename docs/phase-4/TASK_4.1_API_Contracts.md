@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации
 
-- [ ] Создать backend/api/routes/messages.py
-- [ ] Создать backend/api/routes/memory.py
-- [ ] Создать backend/api/routes/topics.py
-- [ ] Создать backend/api/routes/graph.py
-- [ ] Создать backend/api/routes/health.py
-- [ ] Все endpoints документированы (OpenAPI)
-- [ ] Написать API тесты (pytest)
+- [x] Создать backend/api/routes/messages.py
+- [x] Создать backend/api/routes/memory.py
+- [x] Создать backend/api/routes/topics.py
+- [x] Создать backend/api/routes/graph.py
+- [x] Создать backend/api/routes/health.py
+- [x] Все endpoints документированы (OpenAPI)
+- [x] Написать API тесты (pytest)
 
 ---
 
