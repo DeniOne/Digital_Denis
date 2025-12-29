@@ -9,12 +9,12 @@
 
 ## 📋 Чеклист реализации
 
-- [ ] Настроить Celery с Redis
-- [ ] Создать backend/workers/tasks.py
-- [ ] Реализовать все Celery tasks
-- [ ] Настроить periodic schedule (beat)
-- [ ] Docker service для worker
-- [ ] Мониторинг очередей (Flower)
+- [x] Настроить Celery с Redis
+- [x] Создать backend/workers/tasks.py
+- [x] Реализовать все Celery tasks
+- [x] Настроить periodic schedule (beat)
+- [x] Docker service для worker
+- [x] Мониторинг очередей (Flower)
 
 ---
 
