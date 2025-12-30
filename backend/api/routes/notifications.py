@@ -4,9 +4,8 @@ from sqlalchemy.future import select
 from typing import List
 
 from db.database import get_db
-from db.models.push import PushSubscription
+from memory.models import PushSubscription, User
 from core.auth import get_current_user
-from memory.models import User
 from pydantic import BaseModel
 from core.notifications import send_push_notification
 from core.config import settings

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from core.config import settings
-from db.models.push import PushSubscription
+from memory.models import PushSubscription
 from memory.models import User
 # Assuming we have a redis client or similar for rate limiting, but for now we'll keep it simple
 # from core.redis import redis_client
