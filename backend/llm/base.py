@@ -66,3 +66,13 @@ Return only the category name, nothing else."""
         
         result = await self.complete_simple(prompt, model=model)
         return result.strip()
+
+    @abstractmethod
+    async def get_embedding(self, text: str, model: Optional[str] = None) -> List[float]:
+        """Generate embedding for text."""
+        pass
+
+    @abstractmethod
+    async def get_embeddings(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+        """Generate embeddings for multiple texts."""
+        pass

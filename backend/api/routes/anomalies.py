@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from analytics.anomalies import anomaly_service
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
-router = APIRouter(prefix="/anomalies", tags=["Anomalies"])
+router = APIRouter(tags=["Anomalies"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -67,11 +69,13 @@ async def list_anomalies(
     status: str = Query("new", regex="^(new|acknowledged|resolved|dismissed)$"),
     severity: Optional[str] = Query(None, regex="^(low|medium|high|critical)$"),
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """List anomalies with optional filtering."""
     anomalies = await anomaly_service.get_anomalies(
         db,
+        user_id=current_user.id,
         status=status,
         severity=severity,
         limit=limit,
@@ -100,7 +104,8 @@ async def list_anomalies(
 async def run_anomaly_detection(
     baseline_days: int = Query(30, ge=7, le=90),
     current_days: int = Query(7, ge=1, le=30),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Run anomaly detection.
@@ -109,6 +114,7 @@ async def run_anomaly_detection(
     """
     result = await anomaly_service.run_detection(
         db,
+        user_id=current_user.id,
         baseline_days=baseline_days,
         current_days=current_days,
     )
@@ -118,24 +124,31 @@ async def run_anomaly_detection(
 
 @router.get("/stats", response_model=AnomalyStatsResponse)
 async def get_anomaly_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get anomaly statistics."""
-    stats = await anomaly_service.get_stats(db)
+    stats = await anomaly_service.get_stats(db, user_id=current_user.id)
     return AnomalyStatsResponse(**stats)
 
 
 @router.get("/{anomaly_id}", response_model=AnomalyResponse)
 async def get_anomaly(
     anomaly_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get a specific anomaly by ID."""
     from analytics.cal_models import CALAnomaly
     from sqlalchemy import select
     
     result = await db.execute(
-        select(CALAnomaly).where(CALAnomaly.id == anomaly_id)
+        select(CALAnomaly).where(
+            and_(
+                CALAnomaly.id == anomaly_id,
+                CALAnomaly.user_id == current_user.id
+            )
+        )
     )
     anomaly = result.scalar_one_or_none()
     
@@ -161,7 +174,8 @@ async def get_anomaly(
 @router.post("/{anomaly_id}/acknowledge", response_model=ActionResponse)
 async def acknowledge_anomaly(
     anomaly_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Acknowledge an anomaly."""
     success = await anomaly_service.acknowledge(db, anomaly_id)
@@ -180,7 +194,8 @@ async def acknowledge_anomaly(
 async def resolve_anomaly(
     anomaly_id: UUID,
     resolution_note: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Resolve an anomaly."""
     success = await anomaly_service.resolve(db, anomaly_id, resolution_note)
@@ -198,7 +213,8 @@ async def resolve_anomaly(
 @router.post("/{anomaly_id}/dismiss", response_model=ActionResponse)
 async def dismiss_anomaly(
     anomaly_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Dismiss an anomaly (mark as not relevant)."""
     success = await anomaly_service.dismiss(db, anomaly_id)
@@ -215,7 +231,8 @@ async def dismiss_anomaly(
 
 @router.get("/types/summary")
 async def get_anomaly_type_summary(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get summary by anomaly type."""
     from analytics.cal_models import CALAnomaly
@@ -226,7 +243,7 @@ async def get_anomaly_type_summary(
             CALAnomaly.anomaly_type,
             func.count(CALAnomaly.id).label("total"),
             func.sum(func.cast(CALAnomaly.status == "new", type_=None)).label("new_count")
-        ).group_by(CALAnomaly.anomaly_type)
+        ).where(CALAnomaly.user_id == current_user.id).group_by(CALAnomaly.anomaly_type)
     )
     
     return [

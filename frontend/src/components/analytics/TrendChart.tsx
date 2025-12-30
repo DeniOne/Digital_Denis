@@ -60,7 +60,7 @@ export default function TrendChart({
             <LineChart
                 data={data}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                onClick={(e) => {
+                onClick={(e: any) => {
                     if (e?.activePayload?.[0]?.payload) {
                         onPointClick?.(e.activePayload[0].payload);
                     }
@@ -101,9 +101,9 @@ export default function TrendChart({
 // Pre-configured Topic Trend Chart
 export function TopicTrendChart({ data }: { data: TrendDataPoint[] }) {
     const defaultLines: TrendLine[] = [
-        { key: 'finance', name: 'Finance', color: '#3b82f6' },
+        { key: 'finance', name: 'Финансы', color: '#3b82f6' },
         { key: 'hr', name: 'HR', color: '#22c55e' },
-        { key: 'strategy', name: 'Strategy', color: '#a855f7' },
+        { key: 'strategy', name: 'Стратегия', color: '#a855f7' },
     ];
 
     return <TrendChart data={data} lines={defaultLines} />;

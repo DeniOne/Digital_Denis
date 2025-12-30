@@ -82,10 +82,10 @@ function AnomalyAlert({ anomaly }: { anomaly: Anomaly }) {
               href="/health"
               className="text-xs px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
             >
-              View Details
+              Подробнее
             </Link>
             <button className="text-xs px-3 py-1.5 text-zinc-500 hover:text-white transition-colors">
-              Dismiss
+              Скрыть
             </button>
           </div>
         </div>
@@ -108,8 +108,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold">Welcome back, Denis</h1>
-        <p className="text-zinc-400 mt-1">Here&apos;s your cognitive overview</p>
+        <h1 className="text-2xl font-bold">С возвращением, Денис</h1>
+        <p className="text-zinc-400 mt-1">Вот ваш когнитивный обзор на сегодня</p>
       </div>
 
       {/* Stats Grid */}
@@ -117,37 +117,37 @@ export default function Dashboard() {
         <StatCard
           icon="🧠"
           value={health?.total_memories || 0}
-          label="Total Memories"
+          label="Всего воспоминаний"
         />
         <StatCard
           icon="✅"
           value={decisions.length}
-          label="Decisions (recent)"
+          label="Решения (недавние)"
         />
         <StatCard
           icon="🏷️"
           value={health?.active_topics || 0}
-          label="Active Topics"
+          label="Активные темы"
         />
         <StatCard
           icon="💚"
           value={health?.overall_score ? `${Math.round(health.overall_score * 100)}%` : '--'}
-          label="Health Score"
+          label="Индекс здоровья"
         />
       </div>
 
       {/* Active Topics */}
       {trends && trends.length > 0 && (
         <div className="bg-zinc-900 rounded-xl p-4">
-          <h3 className="font-semibold mb-3">Active Topics</h3>
+          <h3 className="font-semibold mb-3">Активные темы</h3>
           <div className="flex flex-wrap gap-2">
             {trends.slice(0, 6).map((trend: TopicTrend) => (
               <Link
                 key={trend.topic_id}
                 href={`/topics?id=${trend.topic_id}`}
                 className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${trend.change_percent > 20
-                    ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30'
-                    : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                  ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30'
+                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
                   }`}
               >
                 {trend.topic_name}
@@ -163,9 +163,9 @@ export default function Dashboard() {
         {/* Recent Decisions */}
         <div className="bg-zinc-900 rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">📈 Recent Decisions</h3>
+            <h3 className="font-semibold">📈 Недавние решения</h3>
             <Link href="/memory?type=decision" className="text-sm text-blue-400 hover:underline">
-              View all
+              Смотреть все
             </Link>
           </div>
           <div className="space-y-3">
@@ -174,7 +174,7 @@ export default function Dashboard() {
                 <MemoryCard key={item.id} item={item} />
               ))
             ) : (
-              <p className="text-zinc-500 text-sm">No recent decisions</p>
+              <p className="text-zinc-500 text-sm">Нет недавних решений</p>
             )}
           </div>
         </div>
@@ -182,9 +182,9 @@ export default function Dashboard() {
         {/* Recent Insights */}
         <div className="bg-zinc-900 rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">💡 Recent Insights</h3>
+            <h3 className="font-semibold">💡 Недавние инсайты</h3>
             <Link href="/memory?type=insight" className="text-sm text-blue-400 hover:underline">
-              View all
+              Смотреть все
             </Link>
           </div>
           <div className="space-y-3">
@@ -193,7 +193,7 @@ export default function Dashboard() {
                 <MemoryCard key={item.id} item={item} />
               ))
             ) : (
-              <p className="text-zinc-500 text-sm">No recent insights</p>
+              <p className="text-zinc-500 text-sm">Нет недавних инсайтов</p>
             )}
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function Dashboard() {
       {/* Anomaly Alerts */}
       {anomalies && anomalies.length > 0 && (
         <div className="space-y-4">
-          <h3 className="font-semibold">⚠️ Anomaly Alerts</h3>
+          <h3 className="font-semibold">⚠️ Аномалии и паттерны</h3>
           {anomalies.slice(0, 2).map((anomaly: Anomaly) => (
             <AnomalyAlert key={anomaly.id} anomaly={anomaly} />
           ))}
@@ -216,8 +216,8 @@ export default function Dashboard() {
           className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 hover:border-blue-400/50 transition-colors"
         >
           <span className="text-2xl">💬</span>
-          <p className="font-medium mt-2">Start Chat</p>
-          <p className="text-xs text-zinc-400">Talk to Digital Denis</p>
+          <p className="font-medium mt-2">Начать чат</p>
+          <p className="text-xs text-zinc-400">Поговорить с Денисом</p>
         </Link>
 
         <Link
@@ -225,8 +225,8 @@ export default function Dashboard() {
           className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
         >
           <span className="text-2xl">🔍</span>
-          <p className="font-medium mt-2">Search Memory</p>
-          <p className="text-xs text-zinc-400">Find past thoughts</p>
+          <p className="font-medium mt-2">Поиск в памяти</p>
+          <p className="text-xs text-zinc-400">Найти прошлые мысли</p>
         </Link>
 
         <Link
@@ -234,8 +234,8 @@ export default function Dashboard() {
           className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
         >
           <span className="text-2xl">🗺️</span>
-          <p className="font-medium mt-2">Mind Map</p>
-          <p className="text-xs text-zinc-400">Visualize connections</p>
+          <p className="font-medium mt-2">Карта мыслей</p>
+          <p className="text-xs text-zinc-400">Визуализировать связи</p>
         </Link>
 
         <Link
@@ -243,8 +243,8 @@ export default function Dashboard() {
           className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors"
         >
           <span className="text-2xl">📊</span>
-          <p className="font-medium mt-2">Health Report</p>
-          <p className="text-xs text-zinc-400">Check cognitive health</p>
+          <p className="font-medium mt-2">Отчет здоровья</p>
+          <p className="text-xs text-zinc-400">Проверить когнитивный статус</p>
         </Link>
       </div>
     </div>

@@ -36,7 +36,7 @@ export default function ActivityHeatmap({
     const width = 7 * (cellSize + gap);
     const height = weeks * (cellSize + gap);
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
     return (
         <div className="flex gap-2">
@@ -66,7 +66,7 @@ export default function ActivityHeatmap({
                                     fill={colorScale(cell.value)}
                                     className="transition-opacity hover:opacity-80"
                                 >
-                                    <title>{cell.date}: {cell.value} items</title>
+                                    <title>{`${cell.date}: ${cell.value} записей`}</title>
                                 </rect>
                             );
                         })}
@@ -90,19 +90,30 @@ export default function ActivityHeatmap({
     );
 }
 
-// Generate sample heatmap data
+// Simple seeded random for deterministic results (SSR-compatible)
+function seededRandom(seed: number): number {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+}
+
+// Generate sample heatmap data (deterministic for SSR)
 export function generateHeatmapData(weeks: number = 12): HeatmapCell[] {
     const data: HeatmapCell[] = [];
-    const today = new Date();
+    // Use a fixed base date for deterministic data
+    const baseDate = new Date('2025-12-30');
 
     for (let w = 0; w < weeks; w++) {
         for (let d = 0; d < 7; d++) {
-            const date = new Date(today);
+            const date = new Date(baseDate);
             date.setDate(date.getDate() - (weeks - w - 1) * 7 - (6 - d));
+
+            // Deterministic "random" based on position
+            const seed = w * 7 + d + 1;
+            const value = Math.floor(seededRandom(seed) * 12);
 
             data.push({
                 date: date.toISOString().split('T')[0],
-                value: Math.floor(Math.random() * 12),
+                value,
                 weekday: d,
                 week: w,
             });

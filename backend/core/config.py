@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # ─────────────────────────────────────────────────────────────────────────
     # Database
     # ─────────────────────────────────────────────────────────────────────────
-    database_url: str = "postgresql://denis:denis_dev_2024@localhost:5432/digital_denis"
+    database_url: str = "postgresql://denis:denis_dev_2024@localhost:5434/digital_denis"
     redis_url: str = "redis://localhost:6379/0"
     
     # ─────────────────────────────────────────────────────────────────────────
@@ -42,10 +42,16 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     
+    # ElevenLabs for TTS
+    elevenlabs_api_key: Optional[str] = None
+    elevenlabs_voice_id: str = "pMsXg9Y9C95gIn6ycYid"  # Recommended default voice
+    elevenlabs_model_id: str = "eleven_multilingual_v2"
+    
     # ─────────────────────────────────────────────────────────────────────────
     # Telegram
     # ─────────────────────────────────────────────────────────────────────────
     telegram_bot_token: Optional[str] = None
+    allowed_telegram_ids: Optional[str] = None  # Comma-separated list of allowed IDs
     
     # ─────────────────────────────────────────────────────────────────────────
     # Security
@@ -54,17 +60,31 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expiry_hours: int = 24
     
+    # Encryption
+    encryption_key: str = "change-this-in-production-must-be-32-bytes-base64"
+    
+    # Push Notifications (VAPID)
+    vapid_private_key: str = "private_key.pem"
+    vapid_public_key: str = "BJZfDd76XxBDteP3n5ZjPCDz4-SJHeg9N174hPS6m6Q8Iz_bxXSHrduSItz-OHaK2dLglvjkY8GJjoV_EFZcat4"
+    vapid_claims_sub: str = "mailto:admin@digitaldenis.local"
+    
     # ─────────────────────────────────────────────────────────────────────────
     # System
     # ─────────────────────────────────────────────────────────────────────────
     system_language: str = "ru"
     debug: bool = True
+    log_level: str = "INFO"
+    json_logs: bool = False
+    log_level: str = "INFO"
+    json_logs: bool = False
     
     # Profile path (relative to project root)
     profile_path: str = "../ai/profiles/denis.yaml"
     
     class Config:
-        env_file = ".env"
+        # Load .env from project root (parent of backend/)
+        from pathlib import Path
+        env_file = Path(__file__).parent.parent.parent / ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
 

@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from analytics.logic import decision_analysis_service
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
-router = APIRouter(prefix="/decisions", tags=["Decision Analysis"])
+router = APIRouter(tags=["Decision Analysis"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -96,7 +98,8 @@ class StatsResponse(BaseModel):
 @router.post("/{decision_id}/analyze", response_model=DecisionAnalysisResponse)
 async def analyze_decision(
     decision_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Analyze a decision's logic quality.
@@ -172,7 +175,8 @@ async def analyze_decision(
 @router.get("/{decision_id}/analysis")
 async def get_decision_analysis(
     decision_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get existing analysis for a decision."""
     analysis = await decision_analysis_service.get_analysis(db, decision_id)
@@ -201,11 +205,13 @@ async def list_analyses(
     limit: int = Query(20, ge=1, le=100),
     min_score: Optional[float] = Query(None, ge=0, le=1),
     max_score: Optional[float] = Query(None, ge=0, le=1),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """List all decision analyses with optional filtering."""
     analyses = await decision_analysis_service.get_all_analyses(
         db,
+        user_id=current_user.id,
         limit=limit,
         min_score=min_score,
         max_score=max_score,
@@ -227,16 +233,18 @@ async def list_analyses(
 
 @router.get("/stats", response_model=StatsResponse)
 async def get_analysis_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get decision analysis statistics."""
-    stats = await decision_analysis_service.get_stats(db)
+    stats = await decision_analysis_service.get_stats(db, user_id=current_user.id)
     return StatsResponse(**stats)
 
 
 @router.get("/risk-levels")
 async def get_risk_level_distribution(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get distribution of risk levels across all decisions."""
     from analytics.cal_models import CALDecisionAnalysis
@@ -247,7 +255,7 @@ async def get_risk_level_distribution(
             CALDecisionAnalysis.risk_level,
             func.count(CALDecisionAnalysis.id).label("count"),
             func.avg(CALDecisionAnalysis.overall_score).label("avg_score")
-        ).group_by(CALDecisionAnalysis.risk_level)
+        ).where(CALDecisionAnalysis.user_id == current_user.id).group_by(CALDecisionAnalysis.risk_level)
     )
     
     return [

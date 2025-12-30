@@ -38,6 +38,7 @@ interface SessionState {
 
     setSessionId: (id: string | null) => void;
     setLoading: (loading: boolean) => void;
+    setIsLoading: (loading: boolean) => void; // alias for setLoading
     setError: (error: string | null) => void;
     clearSession: () => void;
 }
@@ -51,6 +52,7 @@ export const useSessionStore = create<SessionState>()(
 
             setSessionId: (id) => set({ sessionId: id }),
             setLoading: (loading) => set({ isLoading: loading }),
+            setIsLoading: (loading) => set({ isLoading: loading }),
             setError: (error) => set({ error }),
             clearSession: () => set({ sessionId: null, error: null }),
         }),

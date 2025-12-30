@@ -14,9 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from analytics.graphs import mind_map_service, graph_builder
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
-router = APIRouter(prefix="/mindmap", tags=["Mind Map"])
+router = APIRouter(tags=["Mind Map"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -88,7 +90,8 @@ async def get_mind_map(
     node_types: Optional[str] = Query(None, description="Comma-separated node types"),
     days: int = Query(30, ge=7, le=365),
     max_nodes: int = Query(100, ge=10, le=500),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Get mind map graph for visualization.
@@ -99,6 +102,7 @@ async def get_mind_map(
     
     graph = await mind_map_service.get_graph(
         db=db,
+        user_id=current_user.id,
         topic_id=topic_id,
         node_types=types_list,
         days=days,
@@ -141,10 +145,11 @@ async def get_mind_map(
 async def get_node_neighbors(
     node_id: UUID,
     depth: int = Query(1, ge=1, le=3),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get neighborhood graph for a specific node."""
-    graph = await mind_map_service.get_node_neighbors(db, node_id, depth=depth)
+    graph = await mind_map_service.get_node_neighbors(db, node_id, depth=depth, user_id=current_user.id)
     
     return GraphDataResponse(
         nodes=[
@@ -185,7 +190,8 @@ async def get_node_neighbors(
 @router.post("/build-connections", response_model=BuildConnectionsResponse)
 async def build_connections(
     memory_ids: List[UUID],
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Build graph connections for specific memory items.
@@ -195,7 +201,12 @@ async def build_connections(
     from sqlalchemy import select
     
     result = await db.execute(
-        select(MemoryItem).where(MemoryItem.id.in_(memory_ids))
+        select(MemoryItem).where(
+            and_(
+                MemoryItem.id.in_(memory_ids),
+                MemoryItem.user_id == current_user.id
+            )
+        )
     )
     memories = result.scalars().all()
     
@@ -209,16 +220,18 @@ async def build_connections(
 
 @router.post("/add-topic-nodes", response_model=AddTopicNodesResponse)
 async def add_topic_nodes(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Add topic nodes to the graph."""
-    count = await mind_map_service.add_topic_nodes(db)
+    count = await mind_map_service.add_topic_nodes(db, user_id=current_user.id)
     return AddTopicNodesResponse(nodes_created=count)
 
 
 @router.get("/stats")
 async def get_graph_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get graph statistics."""
     from analytics.cal_models import CALGraphNode, CALGraphEdge
@@ -229,7 +242,7 @@ async def get_graph_stats(
         select(
             CALGraphNode.node_type,
             func.count(CALGraphNode.id).label("count")
-        ).group_by(CALGraphNode.node_type)
+        ).where(CALGraphNode.user_id == current_user.id).group_by(CALGraphNode.node_type)
     )
     node_counts = {row.node_type: row.count for row in node_result.fetchall()}
     
@@ -238,7 +251,7 @@ async def get_graph_stats(
         select(
             CALGraphEdge.edge_type,
             func.count(CALGraphEdge.id).label("count")
-        ).group_by(CALGraphEdge.edge_type)
+        ).where(CALGraphEdge.user_id == current_user.id).group_by(CALGraphEdge.edge_type)
     )
     edge_counts = {row.edge_type: row.count for row in edge_result.fetchall()}
     

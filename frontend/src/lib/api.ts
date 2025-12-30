@@ -104,6 +104,25 @@ export interface TopicTrend {
   trend: string;
 }
 
+export interface AnalyticsSummary {
+  total_memories: number;
+  by_type: Record<string, number>;
+  top_topics: { id: string; name: string; count: number }[];
+  streak: number;
+  period_days: number;
+}
+
+export interface ActivityPoint {
+  date: string;
+  count: number;
+}
+
+export interface MoodData {
+  date: string;
+  mood: number;
+  count: number;
+}
+
 export interface MessageResponse {
   response: string;
   agent: string;
@@ -261,13 +280,33 @@ export const graphApi = {
 
 // CAL / Analytics API
 export const analyticsApi = {
-  getTrends: async (days = 30, limit = 10) => {
-    const { data } = await client.get('/cal/trends', { params: { days, limit } });
+  getSummary: async (userId: string, days = 30): Promise<AnalyticsSummary> => {
+    const { data } = await client.get('/analytics/summary', { params: { user_id: userId, days } });
+    return data;
+  },
+
+  getActivity: async (userId: string, days = 30): Promise<ActivityPoint[]> => {
+    const { data } = await client.get('/analytics/activity', { params: { user_id: userId, days } });
+    return data;
+  },
+
+  getHeatmap: async (userId: string): Promise<ActivityPoint[]> => {
+    const { data } = await client.get('/analytics/heatmap', { params: { user_id: userId } });
+    return data;
+  },
+
+  getTrends: async (userId: string, days = 30, limit = 10): Promise<TopicTrend[]> => {
+    const { data } = await client.get('/analytics/trends', { params: { user_id: userId, days, limit } });
     return data;
   },
 
   getGraph: async (params: GraphParams = {}) => {
     const { data } = await client.get('/cal/graph', { params });
+    return data;
+  },
+
+  getMood: async (userId: string, days = 30): Promise<MoodData[]> => {
+    const { data } = await client.get('/analytics/mood', { params: { user_id: userId, days } });
     return data;
   },
 
@@ -350,6 +389,29 @@ export const healthApi = {
   },
 };
 
+// Notifications API
+export const notificationsApi = {
+  getVapidKey: async () => {
+    const { data } = await client.get('/notifications/vapid-public-key');
+    return data;
+  },
+
+  subscribe: async (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) => {
+    const { data } = await client.post('/notifications/subscribe', subscription);
+    return data;
+  },
+
+  unsubscribe: async (endpoint: string) => {
+    const { data } = await client.delete('/notifications/unsubscribe', { params: { endpoint } });
+    return data;
+  },
+
+  test: async () => {
+    const { data } = await client.post('/notifications/test');
+    return data;
+  }
+};
+
 // Export combined API
 export const api = {
   messages: messagesApi,
@@ -359,6 +421,7 @@ export const api = {
   analytics: analyticsApi,
   decisions: decisionsApi,
   health: healthApi,
+  notifications: notificationsApi,
 };
 
 export default client;

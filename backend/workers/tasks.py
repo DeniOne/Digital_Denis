@@ -69,7 +69,7 @@ def update_embeddings(self, memory_id: str):
     from uuid import UUID
     
     async def _update():
-        async with async_session_maker() as db:
+        async with async_session() as db:
             result = await db.execute(
                 select(MemoryItem).where(MemoryItem.id == UUID(memory_id))
             )
@@ -101,25 +101,28 @@ def reindex_all_embeddings(limit: int = 100):
     from sqlalchemy import select
     
     async def _reindex():
-        async with async_session_maker() as db:
-            result = await db.execute(
-                select(MemoryItem)
-                .where(MemoryItem.status == "active")
-                .limit(limit)
-            )
-            items = result.scalars().all()
-            
-            indexed = 0
-            for item in items:
-                try:
-                    await semantic_memory.index(db, item)
-                    indexed += 1
-                except Exception:
-                    pass
-            
-            return {"status": "ok", "indexed": indexed, "total": len(items)}
+        async with async_session() as db:
+            total_indexed = await semantic_memory.reindex_all(db)
+            return {"status": "ok", "indexed": total_indexed}
     
     return asyncio.run(_reindex())
+
+
+@app.task(queue='analytics')
+def run_topic_clustering(user_id: str):
+    """
+    Run unsupervised clustering for a user's memories.
+    """
+    from analytics.topic_orchestrator import topic_orchestrator
+    from uuid import UUID
+    from db.database import async_session
+    
+    async def _run():
+        async with async_session() as db:
+            result = await topic_orchestrator.run_auto_clustering(db, UUID(user_id))
+            return result
+            
+    return asyncio.run(_run())
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -133,11 +136,11 @@ def aggregate_memory():
     Clusters similar memories and creates summary items.
     Runs at 2am.
     """
-    from db.database import async_session_maker
+    from db.database import async_session
     from agents.memory_agent import memory_agent_v2
     
     async def _aggregate():
-        async with async_session_maker() as db:
+        async with async_session() as db:
             clusters = await memory_agent_v2.aggregate_similar(db)
             await db.commit()
             
@@ -155,12 +158,12 @@ def archive_old_memories(days_old: int = 365):
     Archive memories older than specified days.
     Moves to archive status for long-term storage.
     """
-    from db.database import async_session_maker
+    from db.database import async_session
     from memory.models import MemoryItem
     from sqlalchemy import select, update, and_
     
     async def _archive():
-        async with async_session_maker() as db:
+        async with async_session() as db:
             cutoff = datetime.utcnow() - timedelta(days=days_old)
             
             result = await db.execute(
@@ -192,12 +195,12 @@ def cleanup_sessions():
     Clean up old/expired sessions.
     Hourly task.
     """
-    from db.database import async_session_maker
+    from db.database import async_session
     from memory.models import Session
     from sqlalchemy import select, update, and_
     
     async def _cleanup():
-        async with async_session_maker() as db:
+        async with async_session() as db:
             # End sessions inactive for more than 2 hours
             cutoff = datetime.utcnow() - timedelta(hours=2)
             
@@ -226,12 +229,12 @@ def cleanup_old_data():
     Clean up old temporary data.
     Weekly maintenance task.
     """
-    from db.database import async_session_maker
+    from db.database import async_session
     from memory.models import Session, Message
     from sqlalchemy import select, delete, and_
     
     async def _cleanup():
-        async with async_session_maker() as db:
+        async with async_session() as db:
             # Delete sessions older than 90 days
             cutoff = datetime.utcnow() - timedelta(days=90)
             
@@ -276,7 +279,7 @@ def system_health_check():
     System health check.
     Verifies all components are working.
     """
-    from db.database import async_session_maker
+    from db.database import async_session
     from sqlalchemy import select, func
     
     async def _check():
@@ -284,7 +287,7 @@ def system_health_check():
         
         # Check database
         try:
-            async with async_session_maker() as db:
+            async with async_session() as db:
                 await db.execute(select(func.now()))
             results["database"] = "ok"
         except Exception as e:

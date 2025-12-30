@@ -13,6 +13,8 @@ from pydantic import BaseModel
 
 from db.database import get_db, AsyncSession
 from memory.long_term import long_term_memory
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
 router = APIRouter()
@@ -55,12 +57,14 @@ async def list_memories(
     limit: int = Query(20, le=100),
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     List memory items with optional filters.
     """
     items = await long_term_memory.list(
         db=db,
+        user_id=current_user.id,
         item_type=item_type,
         limit=limit,
         offset=offset,
@@ -87,6 +91,7 @@ async def list_memories(
 async def get_memory(
     item_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Get single memory item by ID.
@@ -97,7 +102,7 @@ async def get_memory(
         raise HTTPException(status_code=400, detail="Invalid UUID")
     
     item = await long_term_memory.get(db, uuid_id)
-    if not item:
+    if not item or item.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Memory item not found")
     
     return MemoryItemResponse(
@@ -115,12 +120,14 @@ async def get_memory(
 async def search_memories(
     request: MemorySearchRequest,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Search memories by text query.
     """
     items = await long_term_memory.search(
         db=db,
+        user_id=current_user.id,
         query_text=request.query,
         limit=request.limit,
     )
@@ -143,6 +150,7 @@ async def search_memories(
 async def delete_memory(
     item_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """
     Soft delete memory item.
@@ -152,8 +160,10 @@ async def delete_memory(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID")
     
-    success = await long_term_memory.delete(db, uuid_id)
-    if not success:
+    item = await long_term_memory.get(db, uuid_id)
+    if not item or item.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Memory item not found")
+    
+    success = await long_term_memory.delete(db, uuid_id)
     
     return {"status": "deleted", "id": item_id}

@@ -74,7 +74,7 @@ class CALGraphNode(Base):
     cluster_id = Column(Integer, nullable=True)
     
     # Metadata
-    metadata = Column(JSONB, default={})
+    meta_data = Column("metadata", JSONB, default={})
     importance_score = Column(Float, default=0.5)
     
     # Timestamps
@@ -107,7 +107,7 @@ class CALGraphEdge(Base):
     confidence = Column(Float, default=0.5)
     
     # Metadata
-    metadata = Column(JSONB, default={})
+    meta_data = Column("metadata", JSONB, default={})
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

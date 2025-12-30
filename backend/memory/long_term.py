@@ -13,6 +13,7 @@ from sqlalchemy import select, desc, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from memory.models import MemoryItem, Topic, MemoryTopic
+from core.encryption import encryptor
 
 
 class LongTermMemory:
@@ -33,11 +34,15 @@ class LongTermMemory:
         user_id: Optional[UUID] = None,
     ) -> MemoryItem:
         """Save new memory item."""
+        # Encrypt sensitive fields
+        encrypted_content = encryptor.encrypt(content)
+        encrypted_summary = encryptor.encrypt(summary) if summary else None
+        
         item = MemoryItem(
-            user_id=user_id or UUID("00000000-0000-0000-0000-000000000001"),
+            user_id=user_id,
             item_type=item_type,
-            content=content,
-            summary=summary,
+            content=encrypted_content,
+            summary=encrypted_summary,
             structured_data=structured_data,
             source_agent=source_agent,
             source_session=source_session,
@@ -48,12 +53,21 @@ class LongTermMemory:
         await db.refresh(item)
         return item
     
+    def _decrypt_item(self, item: MemoryItem) -> MemoryItem:
+        """Decrypt item content and summary."""
+        if item:
+            item.content = encryptor.decrypt(item.content)
+            if item.summary:
+                item.summary = encryptor.decrypt(item.summary)
+        return item
+
     async def get(self, db: AsyncSession, item_id: UUID) -> Optional[MemoryItem]:
         """Get memory item by ID."""
         result = await db.execute(
             select(MemoryItem).where(MemoryItem.id == item_id)
         )
-        return result.scalar_one_or_none()
+        item = result.scalar_one_or_none()
+        return self._decrypt_item(item) if item else None
     
     async def list(
         self,
@@ -76,7 +90,8 @@ class LongTermMemory:
         query = query.limit(limit).offset(offset)
         
         result = await db.execute(query)
-        return list(result.scalars().all())
+        items = list(result.scalars().all())
+        return [self._decrypt_item(item) for item in items]
     
     async def search(
         self,
@@ -100,7 +115,8 @@ class LongTermMemory:
         query = query.order_by(desc(MemoryItem.created_at)).limit(limit)
         
         result = await db.execute(query)
-        return list(result.scalars().all())
+        items = list(result.scalars().all())
+        return [self._decrypt_item(item) for item in items]
     
     async def archive(self, db: AsyncSession, item_id: UUID) -> bool:
         """Archive memory item."""
@@ -132,7 +148,8 @@ class LongTermMemory:
         ).order_by(desc(MemoryItem.accessed_at)).limit(limit)
         
         result = await db.execute(query)
-        return list(result.scalars().all())
+        items = list(result.scalars().all())
+        return [self._decrypt_item(item) for item in items]
 
 
 # Global instance

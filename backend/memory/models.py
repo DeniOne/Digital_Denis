@@ -17,8 +17,65 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.sql import func
+from pgvector.sqlalchemy import Vector
+
+EMBEDDING_DIMENSION = 1536  # OpenAI ada-002 / OpenRouter embeddings
 
 Base = declarative_base()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Shared Tables
+# ═══════════════════════════════════════════════════════════════════════════
+
+class PushSubscription(Base):
+    """
+    Push notification subscription for Web Push.
+    """
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    endpoint = Column(String, unique=True, nullable=False)
+    keys = Column(JSON, nullable=False)  # {"p256dh": "...", "auth": "..."}
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="push_subscriptions")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Users
+# ═══════════════════════════════════════════════════════════════════════════
+
+class User(Base):
+    """
+    System user (owner or viewer).
+    """
+    __tablename__ = "users"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    telegram_id = Column(Integer, unique=True, nullable=True)
+    username = Column(String(255), nullable=True)
+    full_name = Column(String(255), nullable=True)
+    
+    # Role: owner, viewer, api
+    role = Column(String(20), default="owner")
+    
+    # Flags
+    is_active = Column(Boolean, default=True)
+    notification_settings = Column(JSON, default={"quiet_hours_start": "23:00", "quiet_hours_end": "08:00", "enabled_types": ["all"]})
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    memories = relationship("MemoryItem", back_populates="user")
+    sessions = relationship("Session", back_populates="user")
+    push_subscriptions = relationship("PushSubscription", back_populates="user", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<User {self.username or self.telegram_id}>"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -32,7 +89,7 @@ class MemoryItem(Base):
     __tablename__ = "memory_items"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=False, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Type classification
     item_type = Column(String(50), nullable=False)  # decision, insight, fact, thought
@@ -58,6 +115,7 @@ class MemoryItem(Base):
     accessed_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
+    user = relationship("User", back_populates="memories")
     topics = relationship("MemoryTopic", back_populates="memory", cascade="all, delete-orphan")
     
     # Indexes
@@ -86,9 +144,14 @@ class Topic(Base):
     
     # Hierarchy
     name = Column(String(255), nullable=False)
-    slug = Column(String(255), nullable=False, unique=True)
+    slug = Column(String(255), nullable=False)  # Slug is unique within scope
     parent_id = Column(UUID(as_uuid=True), ForeignKey("topics.id"), nullable=True)
     level = Column(Integer, default=0)
+    
+    # Ownership & Source
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    is_auto_generated = Column(Boolean, default=False)
+    cluster_id = Column(String(100), nullable=True)  # To group topics from same run
     
     # Description
     description = Column(Text, nullable=True)
@@ -105,6 +168,18 @@ class Topic(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="topics")
+    
+    # Indexes & UNIQUE
+    __table_args__ = (
+        Index("idx_topics_parent", "parent_id"),
+        Index("idx_topics_user", "user_id"),
+        Index("idx_topics_slug", "slug"),
+        # We allow same slug for different users, or if it's a system topic
+        # But for simplicity, we'll keep it globally unique or unique per user
+    )
     
     # Relationships
     parent = relationship("Topic", remote_side=[id], backref="children")
@@ -163,7 +238,7 @@ class Session(Base):
     __tablename__ = "sessions"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Session data
     started_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -176,6 +251,9 @@ class Session(Base):
     
     # Status
     is_active = Column(Boolean, default=True)
+
+    # Relationships
+    user = relationship("User", back_populates="sessions")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -206,3 +284,51 @@ class Message(Base):
         Index("idx_messages_session", "session_id"),
         Index("idx_messages_created", "created_at"),
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Audit
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AuditLog(Base):
+    """
+    Audit trail for critical user actions.
+    """
+    __tablename__ = "audit_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    
+    action = Column(String(50), nullable=False)  # e.g., "login", "memory_create"
+    target_type = Column(String(50))  # e.g., "memory_item"
+    target_id = Column(String(50))  # UUID as string
+    
+    changes = Column(JSON, default={})  # {"field": {"old": "val", "new": "val"}}
+    meta_data = Column("metadata", JSON, default={})  # Extra context: ip, user_agent
+    
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="audit_logs")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Embeddings
+# ═══════════════════════════════════════════════════════════════════════════
+
+class MemoryEmbedding(Base):
+    """
+    Stores vector embeddings for memory items.
+    Separate table to keep main table clean.
+    """
+    __tablename__ = "memory_embeddings"
+    
+    memory_id = Column(UUID(as_uuid=True), ForeignKey("memory_items.id", ondelete="CASCADE"), primary_key=True)
+    embedding = Column(Vector(EMBEDDING_DIMENSION), nullable=False)
+    model = Column(String(100), default="text-embedding-ada-002")
+    
+    # Relationships
+    memory = relationship("MemoryItem", backref="vector_embedding")
+
+    def __repr__(self):
+        return f"<MemoryEmbedding for {self.memory_id}>"

@@ -26,10 +26,10 @@ function getColor(score: number): string {
 }
 
 function getLabel(score: number): string {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Good';
-    if (score >= 40) return 'Fair';
-    return 'Needs Attention';
+    if (score >= 80) return 'Отлично';
+    if (score >= 60) return 'Хорошо';
+    if (score >= 40) return 'Средне';
+    return 'Нужно внимание';
 }
 
 export default function HealthScore({ score, label, size = 200 }: HealthScoreProps) {

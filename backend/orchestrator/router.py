@@ -14,6 +14,9 @@ from agents.memory_agent import memory_agent
 from orchestrator.profile import get_profile
 from memory.short_term import short_term_memory
 from llm.groq import groq
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class RequestRouter:
@@ -48,6 +51,7 @@ class RequestRouter:
         user_message: str,
         session_id: Optional[UUID] = None,
         db=None,
+        user_id: Optional[UUID] = None,
     ) -> AgentResponse:
         """
         Route request to appropriate agent and return response.
@@ -67,6 +71,7 @@ class RequestRouter:
             memories = await memory_agent.get_context_memories(
                 db=db,
                 user_message=user_message,
+                user_id=user_id,
             )
         
         # Build context
@@ -81,6 +86,14 @@ class RequestRouter:
         
         # Select agent
         agent = self.agents.get(request_type, self.default_agent)
+        
+        logger.info(
+            "request_routed",
+            request_type=request_type,
+            agent=agent.name,
+            session_id=str(session_id),
+            message_length=len(user_message)
+        )
         
         # Process request
         response = await agent.run(context)
@@ -105,6 +118,7 @@ class RequestRouter:
                 response=response,
                 session_id=session_id,
                 user_message=user_message,
+                user_id=user_id,
             )
         
         return response

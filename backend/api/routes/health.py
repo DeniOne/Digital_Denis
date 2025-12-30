@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 
 
-router = APIRouter(prefix="/health", tags=["Health"])
+router = APIRouter(tags=["Health"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════

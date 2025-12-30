@@ -16,14 +16,15 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import models for autogenerate
-from memory.models import Base
-from memory.semantic import MemoryEmbedding  # Include vector table
+from memory.models import Base, MemoryEmbedding  # Include models and vector table
+import analytics.cal_models  # Include CAL tables
 
 # Alembic Config object
 config = context.config
 
 # Set database URL from environment
-database_url = os.getenv("DATABASE_URL", "postgresql://denis:denis_dev_2024@localhost:5432/digital_denis")
+database_url = os.getenv("DATABASE_URL", "postgresql://denis:denis_dev_2024@localhost:5434/digital_denis")
+print(f"DEBUG: Using database URL: {database_url!r}")
 config.set_main_option("sqlalchemy.url", database_url)
 
 # Logging

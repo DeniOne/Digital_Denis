@@ -10,12 +10,12 @@ import { usePathname } from 'next/navigation';
 import { useUIStore, useAnalyticsStore } from '@/lib/store';
 
 const navItems = [
-    { href: '/', icon: '📊', label: 'Dashboard' },
-    { href: '/chat', icon: '💬', label: 'Chat' },
-    { href: '/memory', icon: '📁', label: 'Memory' },
-    { href: '/topics', icon: '🏷️', label: 'Topics' },
-    { href: '/mindmap', icon: '🗺️', label: 'Mind Map' },
-    { href: '/health', icon: '💚', label: 'Health' },
+    { href: '/', icon: '📊', label: 'Панель' },
+    { href: '/chat', icon: '💬', label: 'Чат' },
+    { href: '/memory', icon: '📁', label: 'Память' },
+    { href: '/topics', icon: '🏷️', label: 'Темы' },
+    { href: '/mindmap', icon: '🗺️', label: 'Карта мыслей' },
+    { href: '/health', icon: '💚', label: 'Здоровье' },
 ];
 
 export default function Sidebar() {
@@ -32,7 +32,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
                 {sidebarOpen && (
-                    <span className="font-bold text-lg">🧠 Digital Denis</span>
+                    <span className="font-bold text-lg">🧠 Цифровой Денис</span>
                 )}
                 {!sidebarOpen && <span className="text-xl">🧠</span>}
                 <button
@@ -84,7 +84,7 @@ export default function Sidebar() {
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white"
                 >
                     <span className="text-lg">⚙️</span>
-                    {sidebarOpen && <span className="font-medium">Settings</span>}
+                    {sidebarOpen && <span className="font-medium">Настройки</span>}
                 </Link>
             </div>
         </aside>

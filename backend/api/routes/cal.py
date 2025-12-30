@@ -15,9 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from analytics.cal_service import cal_service
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
-router = APIRouter(prefix="/cal", tags=["Cognitive Analytics"])
+router = APIRouter(tags=["Cognitive Analytics"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -91,10 +93,11 @@ class AcknowledgeResponse(BaseModel):
 async def get_topic_trends(
     days: int = Query(30, ge=7, le=365),
     limit: int = Query(10, ge=1, le=50),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get topic activity trends."""
-    trends = await cal_service.get_topic_trends(db, days=days)
+    trends = await cal_service.get_topic_trends(db, days=days, user_id=current_user.id)
     return [
         TopicTrendResponse(
             topic_id=t.topic_id,
@@ -114,13 +117,14 @@ async def get_topic_trends(
 
 @router.get("/graph", response_model=GraphDataResponse)
 async def get_mind_map(
-    topic_id: Optional[UUID] = None,
+    topic_id: Optional[UUID] = Query(None),
     days: int = Query(30, ge=7, le=365),
     limit: int = Query(100, ge=10, le=500),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get mind map graph data for visualization."""
-    graph = await cal_service.get_mind_map(db, topic_id=topic_id, days=days, limit=limit)
+    graph = await cal_service.get_mind_map(db, topic_id=topic_id, days=days, limit=limit, user_id=current_user.id)
     return GraphDataResponse(
         nodes=[
             GraphNodeResponse(**n) for n in graph.nodes
@@ -139,10 +143,11 @@ async def get_mind_map(
 async def get_anomalies(
     status: str = Query("new", regex="^(new|acknowledged|resolved)$"),
     limit: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get current anomalies."""
-    anomalies = await cal_service.get_anomalies(db, status=status, limit=limit)
+    anomalies = await cal_service.get_anomalies(db, status=status, limit=limit, user_id=current_user.id)
     return [
         AnomalyResponse(
             id=a.id,
@@ -160,7 +165,8 @@ async def get_anomalies(
 @router.post("/anomalies/{anomaly_id}/acknowledge", response_model=AcknowledgeResponse)
 async def acknowledge_anomaly(
     anomaly_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Acknowledge an anomaly."""
     success = await cal_service.acknowledge_anomaly(db, anomaly_id)
@@ -169,10 +175,11 @@ async def acknowledge_anomaly(
 
 @router.post("/anomalies/detect")
 async def trigger_anomaly_detection(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Trigger anomaly detection manually."""
-    anomalies = await cal_service.detect_anomalies(db)
+    anomalies = await cal_service.detect_anomalies(db, user_id=current_user.id)
     await db.commit()
     return {
         "status": "ok",
@@ -186,10 +193,11 @@ async def trigger_anomaly_detection(
 
 @router.get("/health", response_model=CognitiveHealthResponse)
 async def get_cognitive_health(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get overall cognitive health report."""
-    report = await cal_service.get_cognitive_health(db)
+    report = await cal_service.get_cognitive_health(db, user_id=current_user.id)
     return CognitiveHealthResponse(
         date=report.date,
         overall_score=report.overall_score,
@@ -205,10 +213,11 @@ async def get_cognitive_health(
 
 @router.post("/health/snapshot")
 async def create_health_snapshot(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Create a health snapshot for today."""
-    snapshot = await cal_service.create_health_snapshot(db)
+    snapshot = await cal_service.create_health_snapshot(db, user_id=current_user.id)
     return {
         "status": "ok",
         "snapshot_id": str(snapshot.id),

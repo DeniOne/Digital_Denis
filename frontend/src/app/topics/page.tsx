@@ -68,15 +68,15 @@ export default function TopicsPage() {
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white p-6">
-            <h1 className="text-2xl font-bold mb-6">🏷️ Topics Explorer</h1>
+            <h1 className="text-2xl font-bold mb-6">🏷️ Проводник тем</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Topic Tree */}
                 <div className="lg:col-span-2 bg-zinc-900 rounded-xl p-4">
-                    <h2 className="text-lg font-semibold mb-4">Topic Tree</h2>
+                    <h2 className="text-lg font-semibold mb-4">Дерево смыслов</h2>
 
                     {treeLoading ? (
-                        <div className="text-zinc-500">Loading...</div>
+                        <div className="text-zinc-500">Загрузка...</div>
                     ) : (
                         <div className="space-y-1">
                             {topicTree?.map((topic: Topic) => (
@@ -93,18 +93,18 @@ export default function TopicsPage() {
                         <div className="bg-zinc-900 rounded-xl p-4">
                             <h2 className="text-lg font-semibold mb-3">{activeTopic.name}</h2>
                             <div className="text-sm text-zinc-400 space-y-1">
-                                <p>Level: {activeTopic.level}</p>
-                                <p>Items: {activeTopic.item_count}</p>
+                                <p>Уровень: {activeTopic.level}</p>
+                                <p>Записей: {activeTopic.item_count}</p>
                             </div>
                         </div>
                     )}
 
                     {/* Trends */}
                     <div className="bg-zinc-900 rounded-xl p-4">
-                        <h2 className="text-lg font-semibold mb-4">📈 Trends (7d)</h2>
+                        <h2 className="text-lg font-semibold mb-4">📈 Тренды (7д)</h2>
 
                         {trendsLoading ? (
-                            <div className="text-zinc-500">Loading...</div>
+                            <div className="text-zinc-500">Загрузка...</div>
                         ) : (
                             <div className="space-y-2">
                                 {trends?.slice(0, 10).map((trend: { topic_id: string; topic_name: string; change_percent: number }) => (

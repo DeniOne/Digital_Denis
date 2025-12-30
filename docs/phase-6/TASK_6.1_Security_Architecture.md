@@ -9,13 +9,13 @@
 
 ## 📋 Чеклист реализации
 
-- [ ] Реализовать JWT auth (backend/core/auth.py)
-- [ ] Telegram OAuth интеграция
-- [ ] Middleware для security headers
-- [ ] CORS настроен
-- [ ] Шифрование данных at rest
-- [ ] Все endpoints защищены
-- [ ] Security audit пройден
+- [x] Реализовать JWT auth (backend/core/auth.py)
+- [x] Telegram OAuth интеграция
+- [x] Middleware для security headers
+- [x] CORS настроен
+- [x] Шифрование данных at rest
+- [x] Все endpoints защищены
+- [x] Security audit пройден
 
 ---
 

@@ -114,6 +114,14 @@ class GroqProvider(BaseLLMProvider):
         
         return data.get("text", "")
 
+    async def get_embedding(self, text: str, model: Optional[str] = None) -> List[float]:
+        """Groq doesn't provide embeddings."""
+        raise NotImplementedError("Groq does not support embeddings. Use OpenRouter instead.")
+
+    async def get_embeddings(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+        """Groq doesn't provide embeddings."""
+        raise NotImplementedError("Groq does not support embeddings. Use OpenRouter instead.")
+
 
 # Global instance
 groq = GroqProvider()

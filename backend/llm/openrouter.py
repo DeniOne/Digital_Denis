@@ -90,6 +90,54 @@ class OpenRouterProvider(BaseLLMProvider):
         response = await self.complete(messages, model=model)
         return response.content
 
+    async def get_embedding(self, text: str, model: Optional[str] = None) -> List[float]:
+        """Generate embedding for text using /embeddings endpoint."""
+        model = model or "openai/text-embedding-ada-002"
+        
+        payload = {
+            "model": model,
+            "input": text,
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/embeddings",
+                headers=self.headers,
+                json=payload,
+                timeout=60.0,
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+        return data["data"][0]["embedding"]
+
+    async def get_embeddings(self, texts: List[str], model: Optional[str] = None) -> List[List[float]]:
+        """Generate multiple embeddings in one request."""
+        model = model or "openai/text-embedding-ada-002"
+        
+        payload = {
+            "model": model,
+            "input": texts,
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{self.base_url}/embeddings",
+                headers=self.headers,
+                json=payload,
+                timeout=120.0,
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+        # Sort results by index to match input order (OpenRouter usually preserves order)
+        # but the API contract for OpenAI-compatible usually implies it.
+        results = [None] * len(texts)
+        for item in data["data"]:
+            results[item["index"]] = item["embedding"]
+            
+        return results
+
 
 # Global instance
 openrouter = OpenRouterProvider()

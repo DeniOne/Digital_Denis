@@ -9,11 +9,11 @@
 
 ## 📋 Чеклист реализации
 
-- [ ] MVP v0.1 выпущен и работает
-- [ ] v0.2 спланирован и начат
-- [ ] Feedback loop настроен
-- [ ] Roadmap обновляется
-- [ ] Документация актуальна
+- [x] MVP v0.1 выпущен и работает
+- [x] v0.2 спланирован и начат
+- [x] Feedback loop настроен
+- [x] Roadmap обновляется
+- [x] Документация актуальна
 
 ---
 
@@ -25,32 +25,37 @@
 
 ## 📦 Артефакт: Roadmap Doc
 
-### MVP v0.1 (2-3 недели)
+## 📦 Артефакт: Roadmap Doc
 
-| Компонент | Функциональность |
-|-----------|------------------|
-| Telegram Bot | Приём/отправка сообщений |
-| Core Agent | Диалог с профилем |
-| Orchestrator | Базовая маршрутизация |
-| Memory (short/long) | Redis + PostgreSQL |
-| Memory Agent | Базовое сохранение |
-| Web UI | Просмотр памяти (read-only) |
+### ✅ MVP v0.1.0 (Released)
+**Status:** Stable  
+**Release Date:** Dec 2025
 
----
-
-### v0.2 (+ 2-3 недели)
-
-| Компонент | Функциональность |
-|-----------|------------------|
-| Analyst Agent | Анализ цифр и данных |
-| Semantic Memory | Vector DB embeddings |
-| Topic Intelligence | Классификация тем |
-| Topic Explorer UI | Просмотр тем, фильтры |
-| Memory Search | Keyword + semantic |
+| Компонент | Функциональность | Статус |
+|-----------|------------------|--------|
+| **Core** | Backend API, DB, Redis | ✅ Done |
+| **Security** | JWT, MFA (Telegram), Encryption | ✅ Done |
+| **Observability**| Structlog, Audit, Prometheus | ✅ Done |
+| **Interface** | Telegram Bot, Basic Web UI | ✅ Done |
+| **Agents** | Memory Agent, Request Router | ✅ Done |
 
 ---
 
-### v1.0 (+ 4-6 недель)
+### 🚧 v0.2.0 (Next Phase)
+**Goal:** Enhanced Interaction & Analytics  
+**Timeline:** Jan - Feb 2026
+
+| Компонент | Функциональность |
+|-----------|------------------|
+| **Mobile App** | PWA / React Native wrapper for on-the-go access |
+| **Voice Mode** | Real-time WebSocket interaction (Groq) |
+| **Analytics** | Personal dashboards (productivity, mood, topics) |
+| **Semantic Search**| Vector DB integration (Weaviate/Chroma) |
+
+---
+
+### 🔮 v1.0.0 (The Future)
+**Goal:** Full Cognitive Augmentation
 
 | Компонент | Функциональность |
 |-----------|------------------|

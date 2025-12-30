@@ -5,10 +5,13 @@ import { Send, User, Bot, BrainCircuit, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { messagesApi } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
+import { VoiceButton } from "@/components/VoiceButton";
+import { TranscriptDisplay } from "@/components/TranscriptDisplay";
 
 export default function ChatPage() {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<any[]>([]);
+    const [liveTranscript, setLiveTranscript] = useState("");
     const { sessionId, setSessionId, isLoading, setIsLoading } = useAppStore();
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -18,12 +21,23 @@ export default function ChatPage() {
         }
     }, [messages]);
 
+    const handleTranscript = (text: string, isFinal: boolean) => {
+        setLiveTranscript(text);
+        if (isFinal) {
+            setInput((prev) => prev + (prev ? " " : "") + text);
+            // Auto-clear after a delay or keep it? 
+            // Usually we clear live display when it's finalized into input
+            setTimeout(() => setLiveTranscript(""), 2000);
+        }
+    };
+
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
 
         const userMessage = { role: "user", content: input };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
+        setLiveTranscript("");
         setIsLoading(true);
 
         try {
@@ -48,7 +62,7 @@ export default function ChatPage() {
     };
 
     return (
-        <div className="flex flex-col h-full max-w-5xl mx-auto">
+        <div className="flex flex-col h-full max-w-5xl mx-auto px-4">
             {/* Header */}
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
                 <div className="flex items-center gap-3">
@@ -69,7 +83,7 @@ export default function ChatPage() {
             {/* Chat History */}
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar mb-6"
+                className="flex-1 overflow-y-auto space-y-6 pr-4 custom-scrollbar mb-6 relative"
             >
                 {messages.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center p-8">
@@ -113,6 +127,13 @@ export default function ChatPage() {
                         </div>
                     </div>
                 ))}
+
+                {liveTranscript && (
+                    <div className="sticky bottom-0 left-0 right-0 z-10 pb-4">
+                        <TranscriptDisplay text={liveTranscript} />
+                    </div>
+                )}
+
                 {isLoading && (
                     <div className="flex gap-4 max-w-[85%] animate-pulse">
                         <div className="w-8 h-8 rounded-lg bg-blue-600/50 flex items-center justify-center flex-shrink-0">
@@ -125,35 +146,43 @@ export default function ChatPage() {
                 )}
             </div>
 
-            {/* Input */}
-            <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition-opacity" />
-                <div className="relative flex bg-[#0f0f0f] rounded-2xl p-2 border border-white/10 group-focus-within:border-white/20 transition-all">
-                    <textarea
-                        rows={1}
-                        value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value);
-                            e.target.style.height = 'inherit';
-                            e.target.style.height = `${e.target.scrollHeight}px`;
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSend();
-                            }
-                        }}
-                        placeholder="Опиши решение или задай аналитический вопрос..."
-                        className="flex-1 bg-transparent border-none focus:ring-0 text-white p-3 resize-none max-h-32 text-sm placeholder:text-zinc-600"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={!input.trim() || isLoading}
-                        className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-not-allowed my-auto ml-2"
-                    >
-                        <Send size={18} />
-                    </button>
+            {/* Input Wrapper */}
+            <div className="flex gap-4 items-end mb-4">
+                {/* Input Container */}
+                <div className="relative group flex-1">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition-opacity" />
+                    <div className="relative flex bg-[#0f0f0f] rounded-2xl p-2 border border-white/10 group-focus-within:border-white/20 transition-all">
+                        <textarea
+                            rows={1}
+                            value={input}
+                            onChange={(e) => {
+                                setInput(e.target.value);
+                                e.target.style.height = 'inherit';
+                                e.target.style.height = `${e.target.scrollHeight}px`;
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            placeholder="Опиши решение или задай аналитический вопрос..."
+                            className="flex-1 bg-transparent border-none focus:ring-0 text-white p-3 resize-none max-h-32 text-sm placeholder:text-zinc-600"
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={!input.trim() || isLoading}
+                            className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed my-auto ml-2"
+                        >
+                            <Send size={18} />
+                        </button>
+                    </div>
                 </div>
+
+                {/* Voice Button */}
+                <VoiceButton
+                    onTranscript={handleTranscript}
+                />
             </div>
         </div>
     );

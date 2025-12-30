@@ -246,12 +246,13 @@ class TopicStatistics:
         self, 
         db: AsyncSession,
         topic_id: UUID,
-        days: int = 30
+        days: int = 30,
+        user_id: Optional[UUID] = None
     ) -> Optional[TopicActivity]:
         """Get activity metrics for a topic."""
         cutoff = datetime.utcnow() - timedelta(days=days)
         
-        sql = text("""
+        sql_text = """
             SELECT 
                 t.id as topic_id,
                 t.name as topic_name,
@@ -265,11 +266,17 @@ class TopicStatistics:
             LEFT JOIN memory_items mi ON mt.memory_id = mi.id 
                 AND mi.created_at > :cutoff
                 AND mi.status = 'active'
-            WHERE t.id = :topic_id
-            GROUP BY t.id, t.name
-        """)
+        """
         
-        result = await db.execute(sql, {"topic_id": topic_id, "cutoff": cutoff})
+        params = {"topic_id": topic_id, "cutoff": cutoff}
+        
+        if user_id:
+            sql_text += " AND mi.user_id = :user_id"
+            params["user_id"] = user_id
+            
+        sql_text += " WHERE t.id = :topic_id GROUP BY t.id, t.name"
+        
+        result = await db.execute(text(sql_text), params)
         row = result.fetchone()
         
         if not row:
@@ -289,12 +296,13 @@ class TopicStatistics:
         self,
         db: AsyncSession,
         days: int = 30,
-        limit: int = 10
+        limit: int = 10,
+        user_id: Optional[UUID] = None
     ) -> List[TopicActivity]:
         """Get most active topics."""
         cutoff = datetime.utcnow() - timedelta(days=days)
         
-        sql = text("""
+        sql_text = """
             SELECT 
                 t.id as topic_id,
                 t.name as topic_name,
@@ -308,12 +316,21 @@ class TopicStatistics:
             JOIN memory_items mi ON mt.memory_id = mi.id
             WHERE mi.created_at > :cutoff
               AND mi.status = 'active'
+        """
+        
+        params = {"cutoff": cutoff, "limit": limit}
+        
+        if user_id:
+            sql_text += " AND mi.user_id = :user_id"
+            params["user_id"] = user_id
+            
+        sql_text += """
             GROUP BY t.id, t.name
             ORDER BY item_count DESC
             LIMIT :limit
-        """)
+        """
         
-        result = await db.execute(sql, {"cutoff": cutoff, "limit": limit})
+        result = await db.execute(text(sql_text), params)
         rows = result.fetchall()
         
         return [
@@ -333,19 +350,31 @@ class TopicStatistics:
         self,
         db: AsyncSession,
         days: int = 30,
-        limit: int = 10
+        limit: int = 10,
+        user_id: Optional[UUID] = None
     ) -> List[TopicTrend]:
         """Get topic trends (rising/falling)."""
         now = datetime.utcnow()
         current_start = now - timedelta(days=days)
         previous_start = current_start - timedelta(days=days)
         
-        sql = text("""
+        params = {
+            "current_start": current_start,
+            "previous_start": previous_start,
+            "limit": limit,
+        }
+        
+        user_filter = ""
+        if user_id:
+            user_filter = " AND mi.user_id = :user_id"
+            params["user_id"] = user_id
+            
+        sql = text(f"""
             WITH current_period AS (
                 SELECT mt.topic_id, COUNT(*) as count
                 FROM memory_topics mt
                 JOIN memory_items mi ON mt.memory_id = mi.id
-                WHERE mi.created_at >= :current_start AND mi.status = 'active'
+                WHERE mi.created_at >= :current_start AND mi.status = 'active' {user_filter}
                 GROUP BY mt.topic_id
             ),
             previous_period AS (
@@ -354,7 +383,7 @@ class TopicStatistics:
                 JOIN memory_items mi ON mt.memory_id = mi.id
                 WHERE mi.created_at >= :previous_start 
                   AND mi.created_at < :current_start
-                  AND mi.status = 'active'
+                  AND mi.status = 'active' {user_filter}
                 GROUP BY mt.topic_id
             )
             SELECT 
@@ -370,11 +399,7 @@ class TopicStatistics:
             LIMIT :limit
         """)
         
-        result = await db.execute(sql, {
-            "current_start": current_start,
-            "previous_start": previous_start,
-            "limit": limit,
-        })
+        result = await db.execute(sql, params)
         rows = result.fetchall()
         
         trends = []

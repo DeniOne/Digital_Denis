@@ -9,13 +9,13 @@ import { usePathname } from 'next/navigation';
 import { useUIStore, useAnalyticsStore, useSessionStore } from '@/lib/store';
 
 const pageTitles: Record<string, string> = {
-    '/': 'Dashboard',
-    '/chat': 'Chat',
-    '/memory': 'Memory Explorer',
-    '/topics': 'Topics',
-    '/mindmap': 'Mind Map',
-    '/health': 'Cognitive Health',
-    '/settings': 'Settings',
+    '/': 'Панель управления',
+    '/chat': 'Чат с Денисом',
+    '/memory': 'Проводник памяти',
+    '/topics': 'Темы и смыслы',
+    '/mindmap': 'Карта мыслей',
+    '/health': 'Когнитивное здоровье',
+    '/settings': 'Настройки',
 };
 
 export default function Header() {
@@ -40,7 +40,7 @@ export default function Header() {
                     {/* Session indicator */}
                     {sessionId && (
                         <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded">
-                            Session active
+                            Сессия активна
                         </span>
                     )}
                 </div>
@@ -53,7 +53,7 @@ export default function Header() {
                         className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 rounded-lg text-zinc-400 hover:text-white text-sm"
                     >
                         <span>🔍</span>
-                        <span className="hidden sm:inline">Search...</span>
+                        <span className="hidden sm:inline">Поиск...</span>
                         <kbd className="hidden sm:inline ml-2 text-xs text-zinc-500 bg-zinc-700 px-1.5 py-0.5 rounded">
                             ⌘K
                         </kbd>

@@ -19,7 +19,7 @@ export default function MindMapPage() {
     return (
         <div className="min-h-screen bg-zinc-950 text-white p-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">🧠 Mind Map</h1>
+                <h1 className="text-2xl font-bold">🧠 Карта мыслей</h1>
 
                 {/* Controls */}
                 <div className="flex gap-4">
@@ -28,9 +28,9 @@ export default function MindMapPage() {
                         onChange={(e) => setFilters({ days: parseInt(e.target.value) })}
                         className="bg-zinc-800 rounded-lg px-3 py-2 text-sm"
                     >
-                        <option value={7}>7 days</option>
-                        <option value={30}>30 days</option>
-                        <option value={90}>90 days</option>
+                        <option value={7}>7 дней</option>
+                        <option value={30}>30 дней</option>
+                        <option value={90}>90 дней</option>
                     </select>
 
                     <select
@@ -38,9 +38,9 @@ export default function MindMapPage() {
                         onChange={(e) => setFilters({ max_nodes: parseInt(e.target.value) })}
                         className="bg-zinc-800 rounded-lg px-3 py-2 text-sm"
                     >
-                        <option value={50}>50 nodes</option>
-                        <option value={100}>100 nodes</option>
-                        <option value={200}>200 nodes</option>
+                        <option value={50}>50 узлов</option>
+                        <option value={100}>100 узлов</option>
+                        <option value={200}>200 узлов</option>
                     </select>
                 </div>
             </div>
@@ -50,7 +50,7 @@ export default function MindMapPage() {
                 <div className="lg:col-span-3 bg-zinc-900 rounded-xl p-4 min-h-[600px] relative">
                     {isLoading ? (
                         <div className="absolute inset-0 flex items-center justify-center text-zinc-500">
-                            Loading graph...
+                            Загрузка карты...
                         </div>
                     ) : graphData ? (
                         <div className="relative w-full h-full">
@@ -109,16 +109,16 @@ export default function MindMapPage() {
                             {/* Legend */}
                             <div className="absolute bottom-4 left-4 bg-zinc-800/80 rounded-lg px-3 py-2 text-xs">
                                 <div className="flex gap-4">
-                                    <span>🔵 Decision</span>
-                                    <span>🟢 Insight</span>
-                                    <span>🟡 Fact</span>
-                                    <span>🟣 Topic</span>
+                                    <span>🔵 Решение</span>
+                                    <span>🟢 Инсайт</span>
+                                    <span>🟡 Факт</span>
+                                    <span>🟣 Тема</span>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-zinc-500">
-                            No graph data
+                            Нет данных для графа
                         </div>
                     )}
                 </div>
@@ -127,18 +127,18 @@ export default function MindMapPage() {
                 <div className="space-y-4">
                     {/* Stats */}
                     <div className="bg-zinc-900 rounded-xl p-4">
-                        <h2 className="text-lg font-semibold mb-3">📊 Stats</h2>
+                        <h2 className="text-lg font-semibold mb-3">📊 Статистика</h2>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-zinc-400">Nodes</span>
+                                <span className="text-zinc-400">Узлов</span>
                                 <span>{graphData?.metadata?.total_nodes || 0}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-zinc-400">Edges</span>
+                                <span className="text-zinc-400">Связей</span>
                                 <span>{graphData?.metadata?.total_edges || 0}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-zinc-400">Clusters</span>
+                                <span className="text-zinc-400">Кластеров</span>
                                 <span>{graphData?.clusters?.length || 0}</span>
                             </div>
                         </div>
@@ -147,14 +147,14 @@ export default function MindMapPage() {
                     {/* Selected Node */}
                     {selectedNode && graphData && (
                         <div className="bg-zinc-900 rounded-xl p-4">
-                            <h2 className="text-lg font-semibold mb-3">🎯 Selected</h2>
+                            <h2 className="text-lg font-semibold mb-3">🎯 Выбрано</h2>
                             {(() => {
                                 const node = graphData.nodes.find(n => n.id === selectedNode);
                                 if (!node) return null;
                                 return (
                                     <div className="space-y-2 text-sm">
                                         <p className="font-medium">{node.label}</p>
-                                        <p className="text-zinc-400">Type: {node.type}</p>
+                                        <p className="text-zinc-400">Тип: {node.type}</p>
                                     </div>
                                 );
                             })()}
@@ -164,12 +164,12 @@ export default function MindMapPage() {
                     {/* Clusters */}
                     {graphData?.clusters && graphData.clusters.length > 0 && (
                         <div className="bg-zinc-900 rounded-xl p-4">
-                            <h2 className="text-lg font-semibold mb-3">🎨 Clusters</h2>
+                            <h2 className="text-lg font-semibold mb-3">🎨 Кластеры</h2>
                             <div className="space-y-1 text-sm">
                                 {graphData.clusters.map((cluster) => (
                                     <div key={cluster.id} className="flex justify-between">
-                                        <span className="text-zinc-400">Cluster {cluster.id}</span>
-                                        <span>{cluster.count} nodes</span>
+                                        <span className="text-zinc-400">Кластер {cluster.id}</span>
+                                        <span>{cluster.count} узлов</span>
                                     </div>
                                 ))}
                             </div>
@@ -180,3 +180,4 @@ export default function MindMapPage() {
         </div>
     );
 }
+

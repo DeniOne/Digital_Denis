@@ -236,19 +236,19 @@ export default function MindMapGraph({ data, onNodeSelect, selectedNode }: MindM
 
             {/* Legend */}
             <div className="absolute bottom-4 left-4 bg-zinc-800/90 backdrop-blur rounded-lg px-4 py-3 text-xs">
-                <div className="font-medium mb-2">Node Types</div>
+                <div className="font-medium mb-2">Типы узлов</div>
                 <div className="flex gap-4">
                     <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-green-500 rotate-45" /> Decision
+                        <span className="w-3 h-3 bg-green-500 rotate-45" /> Решение
                     </span>
                     <span className="flex items-center gap-1">
-                        <span className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-transparent border-b-yellow-500" /> Insight
+                        <span className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-transparent border-b-yellow-500" /> Инсайт
                     </span>
                     <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-blue-500" /> Fact
+                        <span className="w-3 h-3 bg-blue-500" /> Факт
                     </span>
                     <span className="flex items-center gap-1">
-                        <span className="w-3 h-3 bg-pink-500 rounded" /> Topic
+                        <span className="w-3 h-3 bg-pink-500 rounded" /> Тема
                     </span>
                 </div>
             </div>
@@ -271,7 +271,7 @@ export default function MindMapGraph({ data, onNodeSelect, selectedNode }: MindM
                     onClick={() => cyRef.current?.fit()}
                     className="px-3 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm"
                 >
-                    Fit
+                    Центр
                 </button>
             </div>
         </div>

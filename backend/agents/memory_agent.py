@@ -21,6 +21,10 @@ from memory.long_term import long_term_memory
 from memory.semantic import semantic_memory
 from analytics.topics import topic_extractor
 from llm.groq import groq
+from core.logging import get_logger
+from core.audit import AuditService
+
+logger = get_logger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -158,6 +162,7 @@ class MemoryAgentV2(BaseAgent):
         db: AsyncSession,
         agent_response: AgentResponse,
         context: AgentContext,
+        user_id: Optional[UUID] = None,
     ) -> List[MemoryAction]:
         """
         Automatically save worthy items from agent response.
@@ -180,7 +185,7 @@ class MemoryAgentV2(BaseAgent):
                 worthy.append(candidate)
         
         # 3. Check for duplicates using semantic similarity
-        unique = await self._deduplicate(db, worthy)
+        unique = await self._deduplicate(db, worthy, user_id=user_id)
         
         # 4. Save each unique item
         for candidate in unique:
@@ -193,6 +198,18 @@ class MemoryAgentV2(BaseAgent):
                 source_agent=agent_response.agent,
                 source_session=context.session_id,
                 confidence=candidate.confidence,
+                user_id=user_id,
+            )
+            
+            # Audit log
+            await AuditService.log_action(
+                db=db,
+                user_id=user_id,
+                action="memory_save",
+                target_type="memory_item",
+                target_id=str(item.id),
+                changes={"content": candidate.content, "type": candidate.type},
+                meta_data={"confidence": candidate.confidence, "source": "auto_save"}
             )
             
             # Index for semantic search
@@ -295,7 +312,8 @@ JSON:"""
     async def _deduplicate(
         self, 
         db: AsyncSession, 
-        candidates: List[MemoryCandidate]
+        candidates: List[MemoryCandidate],
+        user_id: Optional[UUID] = None,
     ) -> List[MemoryCandidate]:
         """Remove duplicates using semantic similarity."""
         unique = []
@@ -399,6 +417,16 @@ JSON:"""
                 status="deleted",
                 updated_at=datetime.utcnow(),
             )
+        )
+        
+        # Audit log
+        await AuditService.log_action(
+            db=db,
+            user_id=None, # user_id needs to be passed in Context or Request
+            action="memory_forget",
+            target_type="memory_item",
+            target_id=str(request.memory_id),
+            changes={"status": {"old": "active", "new": "deleted"}}
         )
         
         await db.commit()
@@ -541,6 +569,7 @@ JSON:"""
         db: AsyncSession,
         user_message: str,
         limit: int = 5,
+        user_id: Optional[UUID] = None,
     ) -> List[Dict]:
         """Get relevant memories for context using semantic search."""
         
@@ -549,6 +578,7 @@ JSON:"""
             db=db,
             query=user_message,
             limit=limit,
+            user_id=user_id,
             similarity_threshold=0.6,
         )
         
@@ -569,6 +599,7 @@ JSON:"""
         # Fallback to text search
         memories = await long_term_memory.search(
             db=db,
+            user_id=user_id,
             query_text=user_message[:100],
             limit=limit,
         )
@@ -637,17 +668,17 @@ class _LegacyMemoryAgent(_BaseAgent):
             save_to_memory=False,
         )
     
-    async def save_from_response(self, db, response, session_id, user_message):
+    async def save_from_response(self, db, response, session_id, user_message, user_id=None):
         """Delegate to v2."""
         v2 = MemoryAgentV2()
         actions = await v2.auto_save(db, response, 
-            AgentContext(session_id=session_id, user_message=user_message))
+            AgentContext(session_id=session_id, user_message=user_message), user_id=user_id)
         return actions[0].memory_id if actions else None
     
-    async def get_context_memories(self, db, user_message, limit=5):
+    async def get_context_memories(self, db, user_message, limit=5, user_id=None):
         """Delegate to v2."""
         v2 = MemoryAgentV2()
-        return await v2.get_context_memories(db, user_message, limit)
+        return await v2.get_context_memories(db, user_message, limit, user_id)
 
 
 memory_agent = _LegacyMemoryAgent()

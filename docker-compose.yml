@@ -9,18 +9,18 @@ services:
   # PostgreSQL Database
   # ─────────────────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: dd_postgres
     environment:
       POSTGRES_USER: denis
       POSTGRES_PASSWORD: denis_dev_2024
       POSTGRES_DB: digital_denis
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U denis -d digital_denis"]
+      test: [ "CMD-SHELL", "pg_isready -U denis -d digital_denis" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,7 +36,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -67,6 +67,11 @@ services:
       redis:
         condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ─────────────────────────────────────────────────────────────────────────
   # Telegram Bot
@@ -127,7 +132,7 @@ services:
       - postgres
     command: celery -A workers.tasks worker -l info
     profiles:
-      - full  # Запускается только с --profile full
+      - full # Запускается только с --profile full
 
 volumes:
   postgres_data:

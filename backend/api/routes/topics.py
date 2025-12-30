@@ -16,9 +16,11 @@ from sqlalchemy import select
 from db.database import get_db
 from memory.models import Topic
 from analytics.topics import topic_statistics, TopicLoader
+from core.auth import get_current_user_optional
+from memory.models import User
 
 
-router = APIRouter(prefix="/topics", tags=["Topics"])
+router = APIRouter(tags=["Topics"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -69,7 +71,8 @@ class SeedResponse(BaseModel):
 async def list_topics(
     parent_id: Optional[UUID] = None,
     include_inactive: bool = False,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """List all topics, optionally filtered by parent."""
     query = select(Topic)
@@ -92,7 +95,8 @@ async def list_topics(
 
 @router.get("/tree", response_model=List[TopicResponse])
 async def get_topic_tree(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get full topic tree (all topics)."""
     result = await db.execute(
@@ -107,10 +111,11 @@ async def get_topic_tree(
 async def get_top_topics(
     days: int = Query(30, ge=1, le=365),
     limit: int = Query(10, ge=1, le=50),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get most active topics."""
-    activities = await topic_statistics.get_top_topics(db, days=days, limit=limit)
+    activities = await topic_statistics.get_top_topics(db, days=days, limit=limit, user_id=current_user.id)
     return [
         TopicActivityResponse(
             topic_id=a.topic_id,
@@ -128,10 +133,11 @@ async def get_top_topics(
 async def get_topic_trends(
     days: int = Query(30, ge=1, le=365),
     limit: int = Query(10, ge=1, le=50),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get topic trends (rising/falling)."""
-    trends = await topic_statistics.get_trends(db, days=days, limit=limit)
+    trends = await topic_statistics.get_trends(db, days=days, limit=limit, user_id=current_user.id)
     return [
         TopicTrendResponse(
             topic_id=t.topic_id,
@@ -148,7 +154,8 @@ async def get_topic_trends(
 @router.get("/{topic_id}", response_model=TopicResponse)
 async def get_topic(
     topic_id: UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get single topic by ID."""
     result = await db.execute(
@@ -166,10 +173,11 @@ async def get_topic(
 async def get_topic_activity(
     topic_id: UUID,
     days: int = Query(30, ge=1, le=365),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Get activity metrics for a specific topic."""
-    activity = await topic_statistics.get_activity(db, topic_id, days=days)
+    activity = await topic_statistics.get_activity(db, topic_id, days=days, user_id=current_user.id)
     
     if not activity:
         raise HTTPException(status_code=404, detail="Topic not found")
@@ -186,7 +194,8 @@ async def get_topic_activity(
 
 @router.post("/seed", response_model=SeedResponse)
 async def seed_default_topics(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
 ):
     """Seed default topics from config file."""
     import os

@@ -59,7 +59,15 @@ class CoreAgent(BaseAgent):
         ))
         
         # Call LLM
-        response = await openrouter.complete(messages)
+        from llm.groq import groq
+        import logging
+        
+        try:
+            response = await openrouter.complete(messages)
+        except Exception as e:
+            # Fallback to Groq if OpenRouter fails (e.g. 401 Unauthorized)
+            logging.warning(f"OpenRouter failed, falling back to Groq: {e}")
+            response = await groq.complete(messages)
         
         # Check if response contains a decision
         save_to_memory, memory_type = self._should_save(

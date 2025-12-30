@@ -130,10 +130,11 @@ class CALService:
     async def get_topic_trends(
         self,
         db: AsyncSession,
-        days: int = 30
+        days: int = 30,
+        user_id: Optional[UUID] = None
     ) -> List[TopicTrend]:
         """Get topic activity trends."""
-        return await topic_statistics.get_trends(db, days=days)
+        return await topic_statistics.get_trends(db, days=days, user_id=user_id)
     
     async def _update_topic_stats(
         self, 
@@ -174,7 +175,8 @@ class CALService:
         db: AsyncSession,
         topic_id: Optional[UUID] = None,
         days: int = 30,
-        limit: int = 100
+        limit: int = 100,
+        user_id: Optional[UUID] = None
     ) -> GraphData:
         """Get mind map graph data for visualization."""
         cutoff = datetime.utcnow() - timedelta(days=days)
@@ -399,7 +401,8 @@ JSON:"""
         self,
         db: AsyncSession,
         baseline_days: int = 30,
-        current_days: int = 7
+        current_days: int = 7,
+        user_id: Optional[UUID] = None
     ) -> List[CALAnomaly]:
         """Detect anomalies by comparing current period with baseline."""
         anomalies = []
@@ -436,7 +439,8 @@ JSON:"""
         self,
         db: AsyncSession,
         status: str = "new",
-        limit: int = 20
+        limit: int = 20,
+        user_id: Optional[UUID] = None
     ) -> List[Anomaly]:
         """Get current anomalies."""
         result = await db.execute(
@@ -512,7 +516,8 @@ JSON:"""
     
     async def get_cognitive_health(
         self,
-        db: AsyncSession
+        db: AsyncSession,
+        user_id: Optional[UUID] = None
     ) -> CognitiveHealthReport:
         """Get overall cognitive health report."""
         today = date.today()
@@ -597,7 +602,8 @@ JSON:"""
     
     async def create_health_snapshot(
         self,
-        db: AsyncSession
+        db: AsyncSession,
+        user_id: Optional[UUID] = None
     ) -> CALHealthSnapshot:
         """Create a health snapshot for today."""
         report = await self.get_cognitive_health(db)

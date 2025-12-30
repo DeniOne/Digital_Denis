@@ -585,12 +585,16 @@ class AnomalyService:
     async def get_anomalies(
         self,
         db: AsyncSession,
+        user_id: Optional[UUID] = None,
         status: str = "new",
         severity: Optional[str] = None,
         limit: int = 20,
     ) -> List[CALAnomaly]:
         """Get anomalies from database."""
         query = select(CALAnomaly).where(CALAnomaly.status == status)
+        
+        # Note: user_id filtering disabled - CALAnomaly model doesn't have user_id column yet
+        # TODO: Add user_id column to CALAnomaly for multi-user support
         
         if severity:
             query = query.where(CALAnomaly.severity == severity)
