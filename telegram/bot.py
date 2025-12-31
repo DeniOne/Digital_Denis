@@ -8,14 +8,16 @@ Telegram interface for Digital Denis.
 import os
 import logging
 from pathlib import Path
+from datetime import date, timedelta
 import tempfile
 
 import httpx
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
     ContextTypes,
 )
@@ -82,11 +84,6 @@ async def transcribe_voice(audio_path: Path) -> str:
 # Backend Communication
 # ═══════════════════════════════════════════════════════════════════════════
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Backend Communication
-# ═══════════════════════════════════════════════════════════════════════════
-
 async def send_to_backend(user: any, message: str) -> str:
     """Send message to backend and get response."""
     
@@ -140,6 +137,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Можешь писать мне текст или отправлять голосовые сообщения.\n\n"
         "Команды:\n"
         "/start — начать заново\n"
+        "/schedule — моё расписание\n"
         "/memory — последние воспоминания\n"
         "/help — справка"
     )
@@ -152,19 +150,72 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я помогаю структурировать мышление, сохранять решения "
         "и отслеживать когнитивные паттерны.\n\n"
         "Просто напиши мне своё сообщение или отправь голосовое.\n\n"
-        "Особенности:\n"
-        "• Сохраняю важные решения и инсайты\n"
-        "• Применяю твой стиль мышления\n"
-        "• Структурирую ответы\n\n"
-        "Версия: 0.1.0 (MVP)"
+        "📅 Расписание:\n"
+        "• 'Напомни позвонить маме завтра в 15:00'\n"
+        "• 'Поставь встречу с клиентом на понедельник в 10:00'\n"
+        "• 'Принимать таблетки 3 раза в день, 5 дней'\n\n"
+        "Версия: 0.2.0"
     )
 
 
 async def memory_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /memory command."""
-    # Memory command might need similar auth fix or we let it fail for now
-    # Ideally should use telegram ID param if updated backend supports it
     await update.message.reply_text("Функция памяти временно обновляется.")
+
+
+async def schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /schedule command — show today's schedule."""
+    
+    user = update.effective_user
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{BACKEND_URL}/api/v1/schedule/today",
+                params={"telegram_id": user.id},
+                timeout=30.0,
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                
+                if not items:
+                    await update.message.reply_text(
+                        "📅 **Расписание на сегодня**\n\n"
+                        "Нет запланированных дел!",
+                        parse_mode="Markdown"
+                    )
+                    return
+                
+                # Format items
+                text = "📅 **Расписание на сегодня**\n\n"
+                for item in items:
+                    item_type = item.get("item_type", "reminder")
+                    title = item.get("title", "")
+                    time_str = item.get("start_at", item.get("due_at", ""))
+                    status = item.get("status", "pending")
+                    
+                    emoji = {"event": "📌", "task": "📝", "reminder": "🔔"}.get(item_type, "•")
+                    status_emoji = "✅" if status == "completed" else ""
+                    
+                    text += f"{emoji} {status_emoji}{title}\n"
+                    if time_str:
+                        text += f"   ⏰ {time_str}\n"
+                    text += "\n"
+                
+                await update.message.reply_text(text, parse_mode="Markdown")
+            else:
+                await update.message.reply_text("Не удалось загрузить расписание.")
+                
+        except Exception as e:
+            logger.error(f"Schedule load error: {e}")
+            await update.message.reply_text(
+                "📅 Расписание пока пустое.\n\n"
+                "Скажи мне что-то вроде:\n"
+                "• 'Напомни позвонить маме в 15:00'\n"
+                "• 'Поставь встречу на завтра в 10:00'"
+            )
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -231,6 +282,59 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Reminder Callback Handlers
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def handle_reminder_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle reminder inline button callbacks."""
+    
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    if not data.startswith("reminder:"):
+        return
+    
+    parts = data.split(":")
+    if len(parts) < 3:
+        return
+    
+    action = parts[1]  # done, snooze, skip
+    instance_id = parts[2]
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{BACKEND_URL}/api/v1/reminders/{instance_id}/{action}",
+                timeout=10.0,
+            )
+            
+            if response.status_code == 200:
+                if action == "done":
+                    await query.edit_message_text(
+                        f"{query.message.text}\n\n✅ Выполнено!"
+                    )
+                elif action == "snooze":
+                    await query.edit_message_text(
+                        f"{query.message.text}\n\n⏰ Отложено на 15 минут"
+                    )
+                elif action == "skip":
+                    await query.edit_message_text(
+                        f"{query.message.text}\n\n❌ Пропущено"
+                    )
+            else:
+                await query.edit_message_text(
+                    f"{query.message.text}\n\n⚠️ Ошибка обработки"
+                )
+                
+        except Exception as e:
+            logger.error(f"Reminder callback error: {e}")
+            await query.edit_message_text(
+                f"{query.message.text}\n\n⚠️ Ошибка соединения"
+            )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -247,6 +351,8 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("memory", memory_command))
+    app.add_handler(CommandHandler("schedule", schedule_command))
+    app.add_handler(CallbackQueryHandler(handle_reminder_callback, pattern="^reminder:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_handler(MessageHandler(filters.VOICE, handle_voice))
     
@@ -257,3 +363,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

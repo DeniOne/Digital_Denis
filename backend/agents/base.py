@@ -30,8 +30,15 @@ class AgentContext:
     # Request classification
     request_type: Optional[str] = None  # strategic, analytical, operational, reflexive, meta
     
+    # User settings (AI behavior, rules, etc.)
+    user_settings: Optional[Any] = None  # UserSettingsContext
+    
     # Additional context
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    # Database session and User ID
+    db: Optional[Any] = None
+    user_id: Optional[UUID] = None
 
 
 @dataclass

@@ -432,6 +432,7 @@ class MindMapService:
     async def get_graph(
         self,
         db: AsyncSession,
+        user_id: Optional[UUID] = None,  # TODO: Add filtering when CALGraphNode has user_id field
         topic_id: Optional[UUID] = None,
         node_types: Optional[List[str]] = None,
         days: int = 30,
@@ -551,7 +552,8 @@ class MindMapService:
         self,
         db: AsyncSession,
         node_id: UUID,
-        depth: int = 1
+        depth: int = 1,
+        user_id: Optional[UUID] = None,  # TODO: Add filtering
     ) -> GraphData:
         """Get neighborhood graph for a specific node."""
         # Get edges from/to this node

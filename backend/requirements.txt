@@ -38,7 +38,7 @@ python-slugify==8.0.4
 
 # Analytics & ML
 scikit-learn==1.4.0
-hdbscan==0.8.33
+# hdbscan==0.8.33  # Requires C++ Build Tools on Windows, using sklearn implementation instead
 
 
 # Observability
@@ -47,4 +47,10 @@ prometheus-client==0.19.0
 # Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-pywebpush==1.14.3
+pywebpush==2.1.2
+
+# Google Calendar & Timezones
+pytz==2023.3.post1
+google-api-python-client==2.111.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0

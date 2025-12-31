@@ -11,6 +11,7 @@ import { useUIStore, useAnalyticsStore, useSessionStore } from '@/lib/store';
 const pageTitles: Record<string, string> = {
     '/': 'Панель управления',
     '/chat': 'Чат с Денисом',
+    '/schedule': 'Расписание и задачи',
     '/memory': 'Проводник памяти',
     '/topics': 'Темы и смыслы',
     '/mindmap': 'Карта мыслей',

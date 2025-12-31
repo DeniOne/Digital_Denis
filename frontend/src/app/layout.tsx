@@ -48,8 +48,8 @@ export default function RootLayout({
           <Shell>
             {children}
           </Shell>
-          <InstallPrompt />
-          <OfflineIndicator />
+          {/* <InstallPrompt /> */}
+          {/* <OfflineIndicator /> */}
         </Providers>
       </body>
     </html>

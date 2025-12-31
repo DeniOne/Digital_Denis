@@ -58,21 +58,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://digital-denis.app"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.middleware("http")
 async def monitor_requests(request: Request, call_next):
     """Middleware to log requests and record metrics."""
     start_time = time.time()
-    path = request.url.path
+    from core.monitoring import sanitize_path
+    path = sanitize_path(request.url.path)
     method = request.method
     
     # Skip logging for metrics endpoint to avoid noise
@@ -108,8 +101,8 @@ app.mount("/metrics", metrics_app)
 # Security Headers Middleware
 @app.middleware("http")
 async def add_security_headers(request, call_next):
-    # Skip security headers for documentation to allow Swagger UI to load
-    if request.url.path.startswith("/docs") or request.url.path.startswith("/redoc") or request.url.path == "/openapi.json":
+    # Skip security headers for documentation and preflight OPTIONS requests
+    if request.method == "OPTIONS" or request.url.path.startswith("/docs") or request.url.path.startswith("/redoc") or request.url.path == "/openapi.json":
         return await call_next(request)
 
     response = await call_next(request)
@@ -161,6 +154,20 @@ async def health():
 from api.routes import api_router
 
 app.include_router(api_router)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CORS & Outermost Middleware
+# ═══════════════════════════════════════════════════════════════════════════
+
+# CORS Middleware - Must be added LAST to be the outermost
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://digital-denis.app"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

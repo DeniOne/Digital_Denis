@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import models for autogenerate
 from memory.models import Base, MemoryEmbedding  # Include models and vector table
 import analytics.cal_models  # Include CAL tables
+import memory.schedule_models  # Include schedule tables
+import memory.google_auth_models  # Include google auth tables
 
 # Alembic Config object
 config = context.config

@@ -17,10 +17,12 @@ from datetime import datetime, timedelta
 # Celery App Configuration
 # ═══════════════════════════════════════════════════════════════════════════
 
+from core.config import settings
+
 app = Celery(
     'digital_denis',
-    broker='redis://localhost:6379/1',
-    backend='redis://localhost:6379/1'
+    broker=settings.redis_url.replace('/0', '/1'),
+    backend=settings.redis_url.replace('/0', '/1')
 )
 
 # Configuration

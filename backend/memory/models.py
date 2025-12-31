@@ -56,6 +56,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     telegram_id = Column(Integer, unique=True, nullable=True)
     username = Column(String(255), nullable=True)
+    email = Column(String(255), nullable=True)
     full_name = Column(String(255), nullable=True)
     
     # Role: owner, viewer, api
@@ -332,3 +333,95 @@ class MemoryEmbedding(Base):
 
     def __repr__(self):
         return f"<MemoryEmbedding for {self.memory_id}>"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# User Settings (AI Control)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class UserSettings(Base):
+    """
+    AI Control settings for user.
+    Defines how AI behaves, thinks, and interacts.
+    """
+    __tablename__ = "user_settings"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Behavior Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # AI Role: partner_strategic, analyst_logical, coach_socratic, recorder_passive, explorer_hypothesis
+    ai_role = Column(String(50), default="partner_strategic")
+    
+    # Thinking Depth: shallow, structured, systemic, philosophical
+    thinking_depth = Column(String(30), default="structured")
+    
+    # Response Style: short, detailed
+    response_style = Column(String(20), default="detailed")
+    
+    # Confrontation Level: none, soft, argumented, hard
+    confrontation_level = Column(String(20), default="argumented")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Autonomy Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # Initiative: request_only, suggest, warn, proactive
+    initiative_level = Column(String(30), default="suggest")
+    
+    # Intervention Frequency: realtime, post_session, daily_review, anomaly_detected
+    intervention_frequency = Column(String(30), default="realtime")
+    
+    # Allowed Actions: JSON array ['create_decisions', 'link_memories', 'refactor_thoughts', 'challenge_beliefs']
+    allowed_actions = Column(JSON, default=["create_decisions", "link_memories"])
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Memory Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # Save Policy: save_all, save_confirmed, save_marked
+    save_policy = Column(String(30), default="save_confirmed")
+    
+    # Auto Archive Days (0 = disabled)
+    auto_archive_days = Column(Integer, default=365)
+    
+    # Memory Trust Level: none, cautious, trusted
+    memory_trust_level = Column(String(20), default="cautious")
+    
+    # Saved types: JSON array ['facts', 'decisions', 'hypotheses', 'emotional_states', 'behavioral_patterns']
+    saved_types = Column(JSON, default=["facts", "decisions", "hypotheses"])
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Analytics Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # Analytics Types: JSON array ['logical_contradictions', 'recurring_topics', 'trend_deviation', 'cognitive_biases', 'focus_loss']
+    analytics_types = Column(JSON, default=["logical_contradictions", "recurring_topics"])
+    
+    # Aggressiveness: inform, recommend, warn, demand_attention
+    analytics_aggressiveness = Column(String(30), default="recommend")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Explain Mode Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # Explain Mode: off, brief, detailed
+    # When enabled, AI explains its reasoning in responses
+    explain_mode = Column(String(20), default="off")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # Timestamps
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="settings")
+    
+    def __repr__(self):
+        return f"<UserSettings for user {self.user_id}>"
+

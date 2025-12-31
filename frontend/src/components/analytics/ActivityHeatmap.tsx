@@ -15,8 +15,13 @@ interface HeatmapCell {
     week: number;
 }
 
+interface ActivityPoint {
+    date: string;
+    count: number;
+}
+
 interface ActivityHeatmapProps {
-    data: HeatmapCell[];
+    data: HeatmapCell[] | ActivityPoint[];
     cellSize?: number;
     gap?: number;
     weeks?: number;
@@ -27,12 +32,46 @@ const colorScale = d3.scaleQuantize<string>()
     .domain([0, 10])
     .range(['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353']);
 
+// Convert ActivityPoint[] to HeatmapCell[]
+function normalizeData(data: HeatmapCell[] | ActivityPoint[], weeks: number): HeatmapCell[] {
+    if (data.length === 0) return generateHeatmapData(weeks);
+
+    // Check if data is already HeatmapCell format
+    if ('weekday' in data[0] && 'week' in data[0]) {
+        return data as HeatmapCell[];
+    }
+
+    // Convert ActivityPoint to HeatmapCell
+    const activityData = data as ActivityPoint[];
+    const result: HeatmapCell[] = [];
+    const baseDate = new Date();
+
+    for (let w = 0; w < weeks; w++) {
+        for (let d = 0; d < 7; d++) {
+            const date = new Date(baseDate);
+            date.setDate(date.getDate() - (weeks - w - 1) * 7 - (6 - d));
+            const dateStr = date.toISOString().split('T')[0];
+
+            const found = activityData.find(a => a.date === dateStr);
+            result.push({
+                date: dateStr,
+                value: found?.count || 0,
+                weekday: d,
+                week: w,
+            });
+        }
+    }
+
+    return result;
+}
+
 export default function ActivityHeatmap({
     data,
     cellSize = 14,
     gap = 3,
     weeks = 12
 }: ActivityHeatmapProps) {
+    const normalizedData = normalizeData(data, weeks);
     const width = 7 * (cellSize + gap);
     const height = weeks * (cellSize + gap);
 
@@ -51,7 +90,7 @@ export default function ActivityHeatmap({
             <div>
                 <svg width={height} height={width}>
                     <g transform="rotate(90) translate(0, -1)">
-                        {data.map((cell, i) => {
+                        {normalizedData.map((cell, i) => {
                             const x = cell.weekday * (cellSize + gap);
                             const y = cell.week * (cellSize + gap);
 

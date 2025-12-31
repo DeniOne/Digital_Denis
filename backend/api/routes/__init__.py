@@ -21,6 +21,9 @@ from api.routes import auth
 from api.routes import notifications
 from api.routes import topics_auto
 from api.routes import analytics
+from api.routes import settings
+from api.routes import schedule
+from api.routes import google_auth
 
 
 # Create main router
@@ -29,6 +32,7 @@ api_router = APIRouter(prefix="/api/v1")
 
 # Include all sub-routers
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+api_router.include_router(google_auth.router, tags=["Google Auth"])
 api_router.include_router(messages.router, prefix="/messages", tags=["Messages"])
 api_router.include_router(memory.router, prefix="/memory", tags=["Memory"])
 api_router.include_router(topics.router, prefix="/topics", tags=["Topics List"])
@@ -38,6 +42,9 @@ api_router.include_router(cal.router, prefix="/cal", tags=["CAL"])
 api_router.include_router(decisions.router, prefix="/decisions", tags=["Decisions"])
 api_router.include_router(anomalies.router, prefix="/anomalies", tags=["Anomalies"])
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])
+api_router.include_router(schedule.router, tags=["Schedule"])
+api_router.include_router(schedule.reminders_router, tags=["Reminders"])
 api_router.include_router(tts.router, prefix="/voice", tags=["Voice"])
 api_router.include_router(health.router, prefix="/health", tags=["Health"])
 api_router.include_router(analytics.router, tags=["Analytics"])

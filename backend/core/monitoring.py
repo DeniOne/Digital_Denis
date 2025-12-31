@@ -24,6 +24,21 @@ HTTP_REQUEST_DURATION_SECONDS = Histogram(
     buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
 )
 
+import re
+
+def sanitize_path(path: str) -> str:
+    """
+    Sanitize URL path for Prometheus labels.
+    Replaces UUIDs and numeric IDs with placeholders to avoid high cardinality.
+    """
+    # Replace UUIDs
+    path = re.sub(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', '{id}', path)
+    # Replace numeric IDs (if any)
+    path = re.sub(r'/\d+/', '/{id}/', path)
+    if path.endswith('/') and len(path) > 1:
+        path = path[:-1]
+    return path
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Application Metrics
 # ─────────────────────────────────────────────────────────────────────────────

@@ -316,3 +316,147 @@ export function useSessions() {
         staleTime: 5 * 60 * 1000,
     });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Settings Hooks
+// ═══════════════════════════════════════════════════════════════════════════
+
+import {
+    settingsApi,
+    rulesApi,
+    type UserSettings,
+    type BehaviorSettings,
+    type AutonomySettings,
+    type MemorySettings,
+    type AnalyticsSettings,
+    type Rule,
+    type RuleCreate,
+    type RuleUpdate,
+} from './api';
+
+// Extend query keys
+export const settingsQueryKeys = {
+    settings: ['settings'] as const,
+    rules: ['rules'] as const,
+    rulesByScope: (scope?: string) => ['rules', scope] as const,
+};
+
+export function useSettings() {
+    return useQuery({
+        queryKey: settingsQueryKeys.settings,
+        queryFn: () => settingsApi.get(),
+        staleTime: 10 * 60 * 1000, // 10 min
+    });
+}
+
+export function useUpdateSettings() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (settings: Partial<UserSettings>) => settingsApi.update(settings),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.settings });
+        },
+    });
+}
+
+export function useUpdateBehavior() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (behavior: Partial<BehaviorSettings>) => settingsApi.updateBehavior(behavior),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.settings });
+        },
+    });
+}
+
+export function useUpdateAutonomy() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (autonomy: Partial<AutonomySettings>) => settingsApi.updateAutonomy(autonomy),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.settings });
+        },
+    });
+}
+
+export function useUpdateMemorySettings() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (memory: Partial<MemorySettings>) => settingsApi.updateMemory(memory),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.settings });
+        },
+    });
+}
+
+export function useUpdateAnalytics() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (analytics: Partial<AnalyticsSettings>) => settingsApi.updateAnalytics(analytics),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.settings });
+        },
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Rules Hooks
+// ═══════════════════════════════════════════════════════════════════════════
+
+export function useRules(scope?: string) {
+    return useQuery({
+        queryKey: settingsQueryKeys.rulesByScope(scope),
+        queryFn: () => rulesApi.list(scope),
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export function useCreateRule() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (rule: RuleCreate) => rulesApi.create(rule),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.rules });
+        },
+    });
+}
+
+export function useUpdateRule() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, rule }: { id: string; rule: RuleUpdate }) => rulesApi.update(id, rule),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.rules });
+        },
+    });
+}
+
+export function useDeleteRule() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => rulesApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.rules });
+        },
+    });
+}
+
+export function useToggleRule() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => rulesApi.toggle(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: settingsQueryKeys.rules });
+        },
+    });
+}
+

@@ -30,7 +30,7 @@ export default function AnalyticsPage() {
             setLoading(true);
             setError(null);
             try {
-                const [sumRes, actRes, heatRes] = await Promise.all([
+                const [sumRes, actRes, heatRes, moodRes, anomRes] = await Promise.all([
                     api.analytics.getSummary(USER_ID, period),
                     api.analytics.getActivity(USER_ID, period),
                     api.analytics.getHeatmap(USER_ID),

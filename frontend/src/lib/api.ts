@@ -146,8 +146,25 @@ export interface GraphParams {
   max_nodes?: number;
 }
 
+// Schedule Types
+export interface ScheduleItem {
+  id: string;
+  item_type: 'event' | 'task' | 'reminder' | 'recurring';
+  title: string;
+  description?: string;
+  start_at?: string;
+  end_at?: string;
+  due_at?: string;
+  status: string;
+}
+
+export interface ScheduleListResponse {
+  items: ScheduleItem[];
+  date: string;
+}
+
 // API Client
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
 
 const client: AxiosInstance = axios.create({
   baseURL: API_BASE,
@@ -412,6 +429,196 @@ export const notificationsApi = {
   }
 };
 
+// Settings Types
+export interface BehaviorSettings {
+  ai_role: string;
+  thinking_depth: string;
+  response_style: string;
+  confrontation_level: string;
+}
+
+export interface AutonomySettings {
+  initiative_level: string;
+  intervention_frequency: string;
+  allowed_actions: string[];
+}
+
+export interface MemorySettings {
+  save_policy: string;
+  auto_archive_days: number;
+  memory_trust_level: string;
+  saved_types: string[];
+}
+
+export interface AnalyticsSettings {
+  analytics_types: string[];
+  analytics_aggressiveness: string;
+}
+
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  behavior: BehaviorSettings;
+  autonomy: AutonomySettings;
+  memory: MemorySettings;
+  analytics: AnalyticsSettings;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Rule {
+  id: string;
+  scope: 'global' | 'context';
+  trigger: 'always' | 'topic' | 'mode' | 'session';
+  instruction: string;
+  priority: 'low' | 'normal' | 'high';
+  is_active: boolean;
+  context_topic_id?: string;
+  context_mode?: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RuleCreate {
+  instruction: string;
+  scope?: string;
+  trigger?: string;
+  priority?: string;
+  context_topic_id?: string;
+  context_mode?: string;
+}
+
+export interface RuleUpdate {
+  instruction?: string;
+  priority?: string;
+  is_active?: boolean;
+  context_topic_id?: string;
+  context_mode?: string;
+  sort_order?: number;
+}
+
+// Settings API
+export const settingsApi = {
+  get: async (): Promise<UserSettings> => {
+    const { data } = await client.get('/settings');
+    return data;
+  },
+
+  update: async (settings: Partial<UserSettings>): Promise<UserSettings> => {
+    const { data } = await client.put('/settings', settings);
+    return data;
+  },
+
+  updateBehavior: async (behavior: Partial<BehaviorSettings>) => {
+    const { data } = await client.patch('/settings/behavior', behavior);
+    return data;
+  },
+
+  updateAutonomy: async (autonomy: Partial<AutonomySettings>) => {
+    const { data } = await client.patch('/settings/autonomy', autonomy);
+    return data;
+  },
+
+  updateMemory: async (memory: Partial<MemorySettings>) => {
+    const { data } = await client.patch('/settings/memory', memory);
+    return data;
+  },
+
+  updateAnalytics: async (analytics: Partial<AnalyticsSettings>) => {
+    const { data } = await client.patch('/settings/analytics', analytics);
+    return data;
+  },
+};
+
+// Rules API
+export const rulesApi = {
+  list: async (scope?: string): Promise<Rule[]> => {
+    const { data } = await client.get('/settings/rules', { params: { scope } });
+    return data;
+  },
+
+  get: async (id: string): Promise<Rule> => {
+    const { data } = await client.get(`/settings/rules/${id}`);
+    return data;
+  },
+
+  create: async (rule: RuleCreate): Promise<Rule> => {
+    const { data } = await client.post('/settings/rules', rule);
+    return data;
+  },
+
+  update: async (id: string, rule: RuleUpdate): Promise<Rule> => {
+    const { data } = await client.put(`/settings/rules/${id}`, rule);
+    return data;
+  },
+
+  delete: async (id: string) => {
+    const { data } = await client.delete(`/settings/rules/${id}`);
+    return data;
+  },
+
+  toggle: async (id: string) => {
+    const { data } = await client.patch(`/settings/rules/${id}/toggle`);
+    return data;
+  },
+};
+
+// Schedule API
+export const scheduleApi = {
+  getToday: async (): Promise<ScheduleListResponse> => {
+    const { data } = await client.get('/schedule/today');
+    return data;
+  },
+
+  getRange: async (dateFrom: string, dateTo: string, includeCompleted = false): Promise<ScheduleListResponse> => {
+    const { data } = await client.get('/schedule/range', {
+      params: { date_from: dateFrom, date_to: dateTo, include_completed: includeCompleted }
+    });
+    return data;
+  },
+
+  createEvent: async (event: { title: string; start_at: string; end_at?: string; duration_minutes?: number; description?: string }) => {
+    const { data } = await client.post('/schedule/events', event);
+    return data;
+  },
+
+  createTask: async (task: { title: string; due_at: string; description?: string }) => {
+    const { data } = await client.post('/schedule/tasks', task);
+    return data;
+  },
+
+  createReminder: async (reminder: { title: string; remind_at: string; description?: string }) => {
+    const { data } = await client.post('/schedule/reminders', reminder);
+    return data;
+  },
+
+  completeItem: async (id: string) => {
+    const { data } = await client.patch(`/schedule/items/${id}/complete`);
+    return data;
+  },
+
+  skipItem: async (id: string) => {
+    const { data } = await client.patch(`/schedule/items/${id}/skip`);
+    return data;
+  },
+
+  confirmReminder: async (id: string) => {
+    const { data } = await client.post(`/reminders/${id}/done`);
+    return data;
+  },
+
+  snoozeReminder: async (id: string, minutes = 15) => {
+    const { data } = await client.post(`/reminders/${id}/snooze`, null, { params: { minutes } });
+    return data;
+  },
+
+  skipReminder: async (id: string) => {
+    const { data } = await client.post(`/reminders/${id}/skip`);
+    return data;
+  },
+};
+
 // Export combined API
 export const api = {
   messages: messagesApi,
@@ -422,6 +629,10 @@ export const api = {
   decisions: decisionsApi,
   health: healthApi,
   notifications: notificationsApi,
+  settings: settingsApi,
+  rules: rulesApi,
+  schedule: scheduleApi,
 };
 
 export default client;
+

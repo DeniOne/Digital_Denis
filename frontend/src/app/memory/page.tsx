@@ -17,10 +17,13 @@ export default function MemoryExplorer() {
     const [type, setType] = useState('all');
     const [topic, setTopic] = useState<string | undefined>();
 
-    const { data: memories, isLoading } = useMemories({
+    const { data, isLoading } = useMemories({
         item_type: type === 'all' ? undefined : type,
         topic_id: topic,
     });
+
+    // API returns { items: [...], total: number }
+    const memories = data?.items;
 
     const filteredMemories = memories?.filter((m: MemoryItem) =>
         m.content.toLowerCase().includes(search.toLowerCase())

@@ -10,6 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
@@ -238,11 +239,12 @@ async def get_graph_stats(
     from sqlalchemy import select, func
     
     # Count nodes by type
+    # TODO: Add user_id filtering when CALGraphNode model is updated with user_id field
     node_result = await db.execute(
         select(
             CALGraphNode.node_type,
             func.count(CALGraphNode.id).label("count")
-        ).where(CALGraphNode.user_id == current_user.id).group_by(CALGraphNode.node_type)
+        ).group_by(CALGraphNode.node_type)
     )
     node_counts = {row.node_type: row.count for row in node_result.fetchall()}
     
@@ -251,7 +253,7 @@ async def get_graph_stats(
         select(
             CALGraphEdge.edge_type,
             func.count(CALGraphEdge.id).label("count")
-        ).where(CALGraphEdge.user_id == current_user.id).group_by(CALGraphEdge.edge_type)
+        ).group_by(CALGraphEdge.edge_type)
     )
     edge_counts = {row.edge_type: row.count for row in edge_result.fetchall()}
     

@@ -240,3 +240,58 @@ class CALHealthSnapshot(Base):
     __table_args__ = (
         Index("idx_cal_health_date", "snapshot_date"),
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Rules Engine
+# ═══════════════════════════════════════════════════════════════════════════
+
+class Rule(Base):
+    """
+    User-defined rules for AI behavior.
+    Rules are interpreted semantically by the AI.
+    """
+    __tablename__ = "rules"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    # Rule scope: global (always applies) or context (applies to specific topic/mode/session)
+    scope = Column(String(20), nullable=False, default="global")  # global, context
+    
+    # Trigger: when the rule applies
+    trigger = Column(String(30), nullable=False, default="always")  # always, topic, mode, session
+    
+    # The rule instruction (free text, semantically interpreted by AI)
+    instruction = Column(Text, nullable=False)
+    
+    # Priority: low, normal, high
+    priority = Column(String(20), default="normal")
+    
+    # Is the rule active?
+    is_active = Column(Boolean, default=True)
+    
+    # Context linking (for context rules)
+    context_topic_id = Column(UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True)
+    context_mode = Column(String(50), nullable=True)  # e.g., "planning", "coding", "brainstorm"
+    
+    # Order for display
+    sort_order = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="rules")
+    context_topic = relationship("Topic", backref="rules")
+    
+    __table_args__ = (
+        Index("idx_rules_user", "user_id"),
+        Index("idx_rules_scope", "scope"),
+        Index("idx_rules_active", "is_active"),
+    )
+    
+    def __repr__(self):
+        return f"<Rule {self.scope}: {self.instruction[:50]}...>"
+

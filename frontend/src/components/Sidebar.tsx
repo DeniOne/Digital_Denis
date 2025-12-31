@@ -8,13 +8,15 @@ import {
     LayoutDashboard,
     Settings,
     BrainCircuit,
-    PlusCircle
+    PlusCircle,
+    Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Chat", href: "/chat", icon: MessageSquare },
+    { name: "Расписание", href: "/schedule", icon: Calendar },
     { name: "Memory", href: "/memory", icon: Database },
     { name: "Analytics", href: "/analytics", icon: BrainCircuit },
 ];

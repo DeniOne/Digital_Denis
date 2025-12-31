@@ -52,7 +52,7 @@ export function MoodChart({ data }: MoodChartProps) {
                         <Tooltip
                             contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '0.5rem' }}
                             itemStyle={{ color: '#e5e7eb' }}
-                            formatter={(value: number) => [value.toFixed(2), 'Настроение']}
+                            formatter={(value) => [typeof value === 'number' ? value.toFixed(2) : String(value), 'Настроение']}
                             labelFormatter={(label) => new Date(label).toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
                         />
                         <ReferenceLine y={0} stroke="#4b5563" strokeDasharray="3 3" />

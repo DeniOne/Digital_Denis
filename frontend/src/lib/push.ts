@@ -53,7 +53,7 @@ export async function subscribeToPush(): Promise<boolean> {
 
         await api.notifications.subscribe({
             endpoint: subJson.endpoint,
-            keys: subJson.keys
+            keys: subJson.keys as { p256dh: string; auth: string }
         });
 
         console.log('Subscribed to push notifications');

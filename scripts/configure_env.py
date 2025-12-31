@@ -9,9 +9,11 @@ def update_env():
     
     # Values to update
     updates = {
-        "DATABASE_URL": "postgresql://denis:denis_dev_2024@localhost:5433/digital_denis",
+        "DATABASE_URL": "postgresql://denis:denis_dev_2024@localhost:5434/digital_denis",
         "OPENROUTER_API_KEY": "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",
         "ALLOWED_TELEGRAM_IDS": "441610858",
+        "GOOGLE_CLIENT_ID": "your_client_id_here.apps.googleusercontent.com",
+        "GOOGLE_CLIENT_SECRET": "your_client_secret_here",
     }
     
     if not env_path.exists():

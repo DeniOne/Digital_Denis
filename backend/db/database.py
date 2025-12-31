@@ -34,6 +34,9 @@ async_session = sessionmaker(
     expire_on_commit=False,
 )
 
+# Alias for compatibility
+async_session_maker = async_session
+
 
 async def get_db() -> AsyncSession:
     """Dependency for getting database session."""

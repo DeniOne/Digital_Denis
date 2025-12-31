@@ -11,9 +11,11 @@ from uuid import UUID, uuid4
 from agents.base import AgentContext, AgentResponse
 from agents.core_agent import core_agent
 from agents.memory_agent import memory_agent
+from agents.schedule_agent import schedule_agent
 from orchestrator.profile import get_profile
+from orchestrator.user_settings import get_user_settings
+from orchestrator.intent_analyzer import intent_analyzer, IntentAnalysis
 from memory.short_term import short_term_memory
-from llm.groq import groq
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -29,6 +31,7 @@ class RequestRouter:
     - operational: tasks, actions
     - reflexive: meta-thinking, self-analysis
     - meta: about the system itself
+    - schedule: reminders, events, tasks
     """
     
     def __init__(self):
@@ -41,6 +44,9 @@ class RequestRouter:
             "operational": core_agent,  # Will be Operator Agent in v0.2
             "reflexive": core_agent,
             "meta": core_agent,
+            "schedule": schedule_agent,
+            "creative": core_agent,
+            "social": core_agent,
         }
         
         # Default agent
@@ -59,8 +65,8 @@ class RequestRouter:
         # Generate session ID if not provided
         session_id = session_id or uuid4()
         
-        # Classify request
-        request_type = await self._classify_request(user_message)
+        # Analyze intent (extended analysis)
+        intent = await intent_analyzer.analyze(user_message)
         
         # Get chat history from Redis
         history = await short_term_memory.get_chat_history(str(session_id))
@@ -74,25 +80,64 @@ class RequestRouter:
                 user_id=user_id,
             )
         
-        # Build context
+        # Load user settings
+        user_settings = None
+        if db and user_id:
+            user_settings = await get_user_settings(db, user_id)
+        
+        # Build system prompt with user settings and emotional awareness
+        base_prompt = self.profile.get_system_prompt()
+        if user_settings:
+            full_prompt = base_prompt + user_settings.get_settings_prompt()
+        else:
+            full_prompt = base_prompt
+        
+        # Add emotional context to prompt if detected
+        full_prompt = self._add_emotional_context(full_prompt, intent)
+        
+        # Build context with intent analysis
         context = AgentContext(
             session_id=session_id,
             user_message=user_message,
             history=history,
             memories=memories,
-            system_prompt=self.profile.get_system_prompt(),
-            request_type=request_type,
+            system_prompt=full_prompt,
+            request_type=intent.category.value,
+            user_settings=user_settings,
+            db=db,
+            user_id=user_id,
+            metadata={
+                "intent": {
+                    "category": intent.category.value,
+                    "confidence": intent.confidence,
+                    "emotional_state": intent.emotional_state.value,
+                    "urgency": intent.urgency,
+                    "action_type": intent.action_type.value,
+                    "requires_clarification": intent.requires_clarification,
+                    "topics": intent.topics,
+                }
+            }
         )
         
+        # Check if clarification needed
+        if intent.requires_clarification and intent.clarification_question:
+            return AgentResponse(
+                content=intent.clarification_question,
+                agent="router",
+                save_to_memory=False,
+            )
+        
         # Select agent
-        agent = self.agents.get(request_type, self.default_agent)
+        agent = self.agents.get(intent.category.value, self.default_agent)
         
         logger.info(
             "request_routed",
-            request_type=request_type,
+            category=intent.category.value,
+            confidence=intent.confidence,
+            emotional_state=intent.emotional_state.value,
+            urgency=intent.urgency,
             agent=agent.name,
             session_id=str(session_id),
-            message_length=len(user_message)
         )
         
         # Process request
@@ -123,30 +168,43 @@ class RequestRouter:
         
         return response
     
-    async def _classify_request(self, message: str) -> str:
-        """Classify request type using cheap LLM."""
+    def _add_emotional_context(self, prompt: str, intent: IntentAnalysis) -> str:
+        """Add emotional awareness to the system prompt."""
         
-        prompt = f"""Classify this request into one category:
-- strategic: long-term planning, vision, strategy
-- analytical: data analysis, numbers, metrics
-- operational: tasks, actions, to-do
-- reflexive: thinking about thinking, self-analysis
-- meta: about this AI system
-
-Request: {message[:200]}
-
-Return only the category name:"""
+        additions = []
         
-        try:
-            result = await groq.complete_simple(prompt)
-            category = result.strip().lower()
-            if category in self.agents:
-                return category
-        except Exception:
-            pass
+        # Emotional state hints
+        if intent.emotional_state.value == "stressed":
+            additions.append(
+                "\n\n🚨 Пользователь в стрессе или спешке. "
+                "Отвечай кратко и по делу. Избегай длинных ответов."
+            )
+        elif intent.emotional_state.value == "confused":
+            additions.append(
+                "\n\n❓ Пользователь кажется растерянным. "
+                "Объясняй простым языком, уточняй если нужно."
+            )
+        elif intent.emotional_state.value == "negative":
+            additions.append(
+                "\n\n⚠️ Пользователь может быть раздражён. "
+                "Проявляй терпение и понимание."
+            )
+        elif intent.emotional_state.value == "positive":
+            additions.append(
+                "\n\n✨ Пользователь в хорошем настроении! "
+                "Можно быть более творческим в ответах."
+            )
         
-        return "operational"  # Default
+        # Urgency hint
+        if intent.urgency > 0.7:
+            additions.append(
+                f"\n\n⏰ Срочность: {int(intent.urgency * 100)}%. "
+                "Дай ответ максимально быстро и без лишних деталей."
+            )
+        
+        return prompt + "".join(additions)
 
 
 # Global instance
 router = RequestRouter()
+

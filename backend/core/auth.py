@@ -125,27 +125,29 @@ async def get_current_user_optional(
         from memory.models import User
         from sqlalchemy import select
         
-        # Get or create dev user
-        result = await db.execute(select(User).where(User.username == "dev_user"))
-        users = result.scalars().all()
+        # Use the main user account for all debug requests
+        result = await db.execute(
+            select(User).where(User.telegram_id == 441610858)
+        )
+        user = result.scalar_one_or_none()
         
-        if len(users) > 1:
-            print(f"DEBUG: Found multiple dev users: {len(users)}")
-            user = users[0]
-        elif len(users) == 1:
-            user = users[0]
-        else:
-            print("DEBUG: No dev user found, creating one...")
-            # Create dev user
+        if not user:
+            # Fallback: get any existing user
+            result = await db.execute(select(User).limit(1))
+            user = result.scalar_one_or_none()
+            
+        if not user:
+            print("DEBUG: No users found, creating one...")
             user = User(
-                username="dev_user",
-                full_name="Development User",
+                username="denisgovako",
+                full_name="Denis Govako",
+                telegram_id=441610858,
                 role="owner"
             )
             db.add(user)
             await db.commit()
             await db.refresh(user)
-            print(f"DEBUG: Created dev user: {user.id}")
+            print(f"DEBUG: Created user: {user.id}")
         
         return user
     

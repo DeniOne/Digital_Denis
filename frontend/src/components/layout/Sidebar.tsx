@@ -12,6 +12,7 @@ import { useUIStore, useAnalyticsStore } from '@/lib/store';
 const navItems = [
     { href: '/', icon: '📊', label: 'Панель' },
     { href: '/chat', icon: '💬', label: 'Чат' },
+    { href: '/schedule', icon: '📅', label: 'Расписание' },
     { href: '/memory', icon: '📁', label: 'Память' },
     { href: '/topics', icon: '🏷️', label: 'Темы' },
     { href: '/mindmap', icon: '🗺️', label: 'Карта мыслей' },

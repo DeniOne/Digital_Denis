@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     # ─────────────────────────────────────────────────────────────────────────
     # Database
     # ─────────────────────────────────────────────────────────────────────────
-    database_url: str = "postgresql://denis:denis_dev_2024@localhost:5434/digital_denis"
-    redis_url: str = "redis://localhost:6379/0"
+    database_url: str = "postgresql://denis:denis_dev_2024@127.0.0.1:5434/digital_denis"
+    redis_url: str = "redis://127.0.0.1:6379/0"
     
     # ─────────────────────────────────────────────────────────────────────────
     # LLM Providers
@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     vapid_private_key: str = "private_key.pem"
     vapid_public_key: str = "BJZfDd76XxBDteP3n5ZjPCDz4-SJHeg9N174hPS6m6Q8Iz_bxXSHrduSItz-OHaK2dLglvjkY8GJjoV_EFZcat4"
     vapid_claims_sub: str = "mailto:admin@digitaldenis.local"
+    
+    # Google OAuth2
+    google_client_id: Optional[str] = None
+    google_client_secret: Optional[str] = None
+    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
     
     # ─────────────────────────────────────────────────────────────────────────
     # System

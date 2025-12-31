@@ -45,16 +45,23 @@ class SearchService:
         # 2. Execute hybrid SQL query
         # We use Reciprocal Rank Fusion (RRF) or weighted sum. 
         # Here we use weighted sum of normalized scores.
-        sql = text("""
+        # Note: Using explicit cast to avoid asyncpg parameter binding issues
+        embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
+        
+        # Build user filter clause - asyncpg can't handle UUID IS NULL comparisons
+        user_filter = "mi.user_id = cast(:user_id as uuid)" if user_id else "TRUE"
+        user_filter_simple = "user_id = cast(:user_id as uuid)" if user_id else "TRUE"
+        
+        sql = text(f"""
             WITH vector_scores AS (
                 SELECT 
                     mi.id,
-                    1 - (me.embedding <=> :embedding::vector) as v_score
+                    1 - cosine_distance(me.embedding, cast(:embedding as vector)) as v_score
                 FROM memory_items mi
                 JOIN memory_embeddings me ON mi.id = me.memory_id
                 WHERE mi.status = 'active'
-                  AND (:user_id IS NULL OR mi.user_id = :user_id)
-                ORDER BY me.embedding <=> :embedding::vector
+                  AND {user_filter}
+                ORDER BY cosine_distance(me.embedding, cast(:embedding as vector))
                 LIMIT :search_limit
             ),
             keyword_scores AS (
@@ -63,7 +70,7 @@ class SearchService:
                     ts_rank_cd(to_tsvector('russian', content || ' ' || COALESCE(summary, '')), plainto_tsquery('russian', :query)) as k_score
                 FROM memory_items
                 WHERE status = 'active'
-                  AND (:user_id IS NULL OR user_id = :user_id)
+                  AND {user_filter_simple}
                   AND to_tsvector('russian', content || ' ' || COALESCE(summary, '')) @@ plainto_tsquery('russian', :query)
                 LIMIT :search_limit
             )
@@ -78,17 +85,20 @@ class SearchService:
             ORDER BY combined_score DESC
             LIMIT :limit
         """)
-
-        result = await db.execute(sql, {
-            "embedding": str(query_embedding),
+        
+        params = {
+            "embedding": embedding_str,
             "query": query,
-            "user_id": user_id,
             "limit": limit,
             "search_limit": limit * 3,
             "v_weight": vector_weight,
             "k_weight": keyword_weight,
             "threshold": similarity_threshold
-        })
+        }
+        if user_id:
+            params["user_id"] = str(user_id)
+
+        result = await db.execute(sql, params)
 
         rows = result.fetchall()
         

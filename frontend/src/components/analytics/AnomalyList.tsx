@@ -52,7 +52,7 @@ export function AnomalyList({ anomalies }: AnomalyListProps) {
                                         {new Date(anomaly.detected_at).toLocaleDateString()}
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-400 mt-1">{anomaly.description || anomaly.title}</p>
+                                <p className="text-sm text-gray-400 mt-1">{anomaly.title}</p>
                                 {anomaly.interpretation && (
                                     <div className="mt-2 text-xs text-gray-300 italic border-l-2 border-white/10 pl-2">
                                         &quot;{anomaly.interpretation}&quot;
