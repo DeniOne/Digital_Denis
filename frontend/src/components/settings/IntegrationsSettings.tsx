@@ -8,6 +8,9 @@
 import { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, XCircle, RefreshCcw, Loader2, ExternalLink } from 'lucide-react';
 
+// API Base URL from environment
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
+
 interface GoogleStatus {
     active: boolean;
     email: string | null;
@@ -21,7 +24,7 @@ export default function IntegrationsSettings() {
 
     const fetchStatus = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/auth/google/status');
+            const res = await fetch(`${API_BASE}/auth/google/status`);
             const data = await res.json();
             setStatus(data);
         } catch (err) {
@@ -37,7 +40,7 @@ export default function IntegrationsSettings() {
 
     const handleConnect = async () => {
         try {
-            const res = await fetch('http://localhost:8000/api/v1/auth/google');
+            const res = await fetch(`${API_BASE}/auth/google`);
             const data = await res.json();
             if (data.url) {
                 window.location.href = data.url;
@@ -50,7 +53,7 @@ export default function IntegrationsSettings() {
     const handleSync = async () => {
         setIsSyncing(true);
         try {
-            await fetch('http://localhost:8000/api/v1/auth/google/sync', { method: 'POST' });
+            await fetch(`${API_BASE}/auth/google/sync`, { method: 'POST' });
             alert('Синхронизация запущена');
         } catch (err) {
             alert('Ошибка при синхронизации');

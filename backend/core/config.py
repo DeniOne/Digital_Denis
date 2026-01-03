@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     google_client_secret: Optional[str] = None
     google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
     
+    # Frontend URL for redirects
+    frontend_url: str = "http://localhost:3000"
+    
     # ─────────────────────────────────────────────────────────────────────────
     # System
     # ─────────────────────────────────────────────────────────────────────────

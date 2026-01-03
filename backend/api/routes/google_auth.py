@@ -131,12 +131,12 @@ async def google_callback(
         logger.info("google_auth_success", user_id=str(user.id))
         
         # Redirect back to frontend
-        return RedirectResponse(url="http://localhost:3000/settings?google=success")
+        return RedirectResponse(url=f"{settings.frontend_url}/settings?google=success")
         
     except Exception as e:
         logger.error("google_auth_error", error=str(e))
         await db.rollback()
-        return RedirectResponse(url="http://localhost:3000/settings?google=error")
+        return RedirectResponse(url=f"{settings.frontend_url}/settings?google=error")
 
 
 @router.get("/status")
