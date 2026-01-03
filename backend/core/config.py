@@ -8,6 +8,7 @@ Digital Den — Core Configuration
 from functools import lru_cache
 from typing import Optional
 
+from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
@@ -91,7 +92,6 @@ class Settings(BaseSettings):
     
     class Config:
         # Load .env from project root (parent of backend/)
-        from pathlib import Path
         # Multi-level .env file detection
         @staticmethod
         def find_env_file():
