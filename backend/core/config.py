@@ -95,6 +95,7 @@ class Settings(BaseSettings):
         # Multi-level .env file detection
         @staticmethod
         def find_env_file():
+            from pathlib import Path
             # 1. Try relative to current working directory
             try:
                 cwd_env = Path.cwd() / ".env"
