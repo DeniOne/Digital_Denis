@@ -61,24 +61,102 @@ async def send_message(
         except ValueError:
             pass
     
-    # Route to appropriate agent
+    # Route via RAG 2.0 Universal Core (with fallback)
     try:
-        response = await request_router.route(
-            user_message=request.content,
-            session_id=session_id,
+        # RAG 2.0 imports (lazy loading)
+        from orchestrator.rag2_orchestrator import rag2_orchestrator
+        from agents.core_agent import core_agent
+        from agents.base import AgentContext
+        
+        # Get conversation ID
+        # Handle anonymous users (current_user can be None)
+        if current_user and current_user.id:
+            user_id = current_user.id
+            conversation_id = str(session_id) if session_id else str(user_id)
+        else:
+            # Anonymous user - use session_id or generate temp UUID
+            from uuid import uuid4
+            user_id = uuid4()  # temporary user ID for anonymous
+            conversation_id = str(session_id) if session_id else str(user_id)
+        
+        # Get recent messages from short-term memory
+        recent_messages = await short_term_memory.get_chat_history(conversation_id)
+        formatted_messages = [
+            {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+            for msg in recent_messages[-5:]
+        ]
+        
+        # RAG 2.0 Orchestration
+        rag_result = await rag2_orchestrator.process_message(
             db=db,
-            user_id=current_user.id,
+            user_id=user_id,
+            chat_id=conversation_id,
+            message=request.content,
+            recent_messages=formatted_messages,
+            user_settings=None
         )
+        
+        # Prepare context for core agent
+        # ВАЖНО: не передаём весь framed_context в system_prompt (слишком большой)
+        # Вместо этого передаём только первые 3000 символов
+        context_preview = rag_result["framed_context"][:3000]
+        
+        agent_context = AgentContext(
+            user_message=request.content,
+            user_id=user_id,  # используем переменную user_id (может быть anonymous)
+            session_id=session_id or conversation_id,
+            system_prompt=f"[RAG 2.0 Context Preview]\n{context_preview}\n\n[Full context truncated for performance]",
+            memories=[],
+            history=formatted_messages,
+        )
+        
+        # Generate LLM response
+        llm_response = await core_agent.process(agent_context)
+        
+        # Save to short-term memory
+        await short_term_memory.add_message(
+            session_id=conversation_id,
+            role="user",
+            content=request.content
+        )
+        await short_term_memory.add_message(
+            session_id=conversation_id,
+            role="assistant",
+            content=llm_response.content
+        )
+        
+        return MessageResponse(
+            response=llm_response.content,
+            agent="RAG2.0-Core",
+            session_id=str(session_id or conversation_id),
+            memory_saved=llm_response.save_to_memory,
+            tokens_used=llm_response.tokens_used,
+        )
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    return MessageResponse(
-        response=response.content,
-        agent=response.agent,
-        session_id=str(response.follow_up) if response.follow_up else str(session_id or ""),
-        memory_saved=response.save_to_memory,
-        tokens_used=response.tokens_used,
-    )
+        import traceback
+        print(f"⚠️ RAG 2.0 Error, falling back to classic router: {e}")
+        print(traceback.format_exc())
+        
+        # Fallback to classic request router
+        try:
+            response = await request_router.route(
+                user_message=request.content,
+                session_id=session_id,
+                db=db,
+                user_id=current_user.id,
+            )
+            
+            return MessageResponse(
+                response=response.content,
+                agent=f"{response.agent} (fallback)",
+                session_id=str(response.follow_up) if response.follow_up else str(session_id or ""),
+                memory_saved=response.save_to_memory,
+                tokens_used=response.tokens_used,
+            )
+        except Exception as fallback_error:
+            print(f"❌ Fallback also failed: {fallback_error}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 class TelegramMessageRequest(BaseModel):
@@ -142,23 +220,71 @@ async def send_telegram_message(
         except ValueError:
             pass
             
-    # 3. Process Message
+    # 3. Process Message via RAG 2.0
     try:
-        response = await request_router.route(
-            user_message=request.content,
-            session_id=session_id,
+        # RAG 2.0 imports (lazy loading)
+        from orchestrator.rag2_orchestrator import rag2_orchestrator
+        from agents.core_agent import core_agent
+        from agents.base import AgentContext
+        
+        # Get recent messages from short-term memory
+        chat_id = str(request.telegram_id)
+        recent_messages = await short_term_memory.get_chat_history(chat_id)
+        
+        # Convert to format expected by RAG 2.0
+        formatted_messages = [
+            {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+            for msg in recent_messages[-5:]  # последние 5
+        ]
+        
+        # RAG 2.0 Orchestration
+        rag_result = await rag2_orchestrator.process_message(
             db=db,
             user_id=user.id,
+            chat_id=chat_id,
+            message=request.content,
+            recent_messages=formatted_messages,
+            user_settings=None  # TODO: load from DB if needed
         )
+        
+        # Prepare context for core agent
+        
+        agent_context = AgentContext(
+            user_message=request.content,
+            user_id=user.id,
+            session_id=session_id or chat_id,
+            system_prompt=rag_result["framed_context"],  # RAG 2.0 structured context
+            memories=[],  # уже в framed_context
+            history=formatted_messages,
+        )
+        
+        # Generate LLM response
+        llm_response = await core_agent.process(agent_context)
+        
+        # Save to short-term memory
+        await short_term_memory.add_message(
+            session_id=chat_id,
+            role="user",
+            content=request.content
+        )
+        await short_term_memory.add_message(
+            session_id=chat_id,
+            role="assistant",
+            content=llm_response.content
+        )
+        
     except Exception as e:
+        import traceback
+        print(f"RAG 2.0 Error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
     return MessageResponse(
-        response=response.content,
-        agent=response.agent,
-        session_id=str(response.follow_up) if response.follow_up else str(session_id or ""),
-        memory_saved=response.save_to_memory,
-        tokens_used=response.tokens_used,
+        response=llm_response.content,
+        agent="RAG2.0-CoreAgent",
+        session_id=str(session_id or chat_id),
+        memory_saved=llm_response.save_to_memory,
+        tokens_used=llm_response.tokens_used,
     )
 
 

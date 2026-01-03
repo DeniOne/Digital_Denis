@@ -107,6 +107,13 @@ class MemoryItem(Base):
     source_session = Column(UUID(as_uuid=True), nullable=True)
     confidence = Column(Float, default=0.5)
     
+    # RAG 2.0 fields
+    related_to = Column(ARRAY(UUID(as_uuid=True)), nullable=True)  # связи с другими воспоминаниями
+    usage_count = Column(Integer, default=0)  # сколько раз использовалось
+    positive_outcomes = Column(Integer, default=0)  # позитивные исходы
+    negative_outcomes = Column(Integer, default=0)  # негативные исходы
+    confidence_level = Column(String(16), default="medium")  # high, medium, low, unknown
+    
     # Status
     status = Column(String(20), default="active")  # active, archived, aggregated, deleted
     
@@ -129,6 +136,146 @@ class MemoryItem(Base):
     
     def __repr__(self):
         return f"<MemoryItem {self.item_type}: {self.content[:50]}...>"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Topics
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Memory Events (Metapamory)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class MemoryEvent(Base):
+    """
+    Tracking memory usage and effectiveness.
+    """
+    __tablename__ = "memory_events"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    memory_id = Column(UUID(as_uuid=True), ForeignKey("memory_items.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    event_type = Column(String(32), nullable=False)  # recalled, used, rejected, archived
+    outcome = Column(String(16), nullable=True)      # positive, neutral, negative, unknown
+    
+    context = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    memory = relationship("MemoryItem", backref="events")
+    user = relationship("User", backref="memory_events")
+    
+    # Indexes
+    __table_args__ = (
+        Index("idx_memory_events_memory", "memory_id"),
+        Index("idx_memory_events_user", "user_id"),
+        Index("idx_memory_events_type", "event_type"),
+        Index("idx_memory_events_created", "created_at"),
+    )
+    
+    def __repr__(self):
+        return f"<MemoryEvent {self.event_type} for {self.memory_id}>"
+
+
+class KaizenMetric(Base):
+    """
+    Kaizen metrics for user's thinking quality trends.
+    """
+    __tablename__ = "kaizen_metrics"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    dimension = Column(String(32), nullable=False)  # decision_quality, consistency, clarity_of_thought, execution, emotional_stability
+    score = Column(Float, nullable=False)            # 0.0 - 100.0
+    
+    context = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="kaizen_metrics")
+    
+    # Indexes
+    __table_args__ = (
+        Index("idx_kaizen_metrics_user", "user_id"),
+        Index("idx_kaizen_metrics_dimension", "dimension"),
+        Index("idx_kaizen_metrics_created", "created_at"),
+    )
+    
+    def __repr__(self):
+        return f"<KaizenMetric {self.dimension}: {self.score}>"
+
+
+class ConversationState(Base):
+    """
+    Explicit dialog state tracking for low-bandwidth channels (Telegram).
+    """
+    __tablename__ = "conversation_states"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    conversation_id = Column(String(255), nullable=False)  # chat_id from Telegram
+    
+    # Core state
+    topic = Column(Text, nullable=True)
+    goal = Column(Text, nullable=True)
+    current_step = Column(Text, nullable=True)
+    intent = Column(String(50), nullable=True)
+    
+    # Entities and objects
+    active_entities = Column(ARRAY(Text), default=[])
+    active_objects = Column(ARRAY(Text), default=[])
+    
+    # Assumptions and constraints
+    assumptions = Column(ARRAY(Text), default=[])
+    constraints = Column(ARRAY(Text), default=[])
+    
+    # Decisions and questions
+    decisions_made = Column(JSON, default=[])
+    open_questions = Column(ARRAY(Text), default=[])
+    unresolved_points = Column(ARRAY(Text), default=[])
+    
+    # Confidence
+    confidence_level = Column(String(16), default="unknown")
+    
+    # TTL
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    ttl_hours = Column(Integer, default=48)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User", backref="conversation_states")
+    
+    # Indexes and constraints
+    __table_args__ = (
+        Index("idx_conversation_states_user", "user_id"),
+        Index("idx_conversation_states_conv_id", "conversation_id"),
+        Index("idx_conversation_states_updated", "last_updated"),
+    )
+    
+    def to_dict(self):
+        """Convert to dict for JSON serialization"""
+        return {
+            "conversation_id": self.conversation_id,
+            "topic": self.topic,
+            "goal": self.goal,
+            "current_step": self.current_step,
+            "intent": self.intent,
+            "active_entities": self.active_entities or [],
+            "active_objects": self.active_objects or [],
+            "assumptions": self.assumptions or [],
+            "constraints": self.constraints or [],
+            "decisions_made": self.decisions_made or [],
+            "open_questions": self.open_questions or [],
+            "unresolved_points": self.unresolved_points or [],
+            "confidence_level": self.confidence_level,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "ttl_hours": self.ttl_hours,
+        }
+    
+    def __repr__(self):
+        return f"<ConversationState {self.conversation_id}: {self.topic}>"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
