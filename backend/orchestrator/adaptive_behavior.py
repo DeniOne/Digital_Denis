@@ -11,15 +11,15 @@ Principle:
 Based on: docs/adaptive_ai_behavior.md, docs/golden_standard_denis.md
 """
 
-import logging
 from enum import Enum
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 from analytics.kaizen_models import UserState
+from core.logging import get_logger
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
