@@ -92,7 +92,19 @@ class Settings(BaseSettings):
     class Config:
         # Load .env from project root (parent of backend/)
         from pathlib import Path
-        env_file = Path(__file__).parent.parent.parent / ".env"
+        # Try to find .env by looking up from current file
+        @staticmethod
+        def find_env_file():
+            base = Path(__file__).resolve().parent
+            for _ in range(4):
+                if (base / ".env").exists():
+                    return base / ".env"
+                if base.parent == base:
+                    break
+                base = base.parent
+            return Path(__file__).resolve().parent.parent.parent / ".env" # Fallback
+
+        env_file = find_env_file()
         env_file_encoding = "utf-8"
         case_sensitive = False
 

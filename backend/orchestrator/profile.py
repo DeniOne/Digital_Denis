@@ -139,11 +139,30 @@ class ProfileLoader:
     """Loads digital profile from YAML file."""
     
     def __init__(self, profile_path: Optional[str] = None):
-        # Profile path is relative to project root (parent of backend/)
         if profile_path:
             self.profile_path = Path(profile_path)
         else:
-            project_root = Path(__file__).parent.parent.parent  # backend/../.. = project root
+            # Smart project root detection
+            # Locally: backend/orchestrator/profile.py -> project_root is parent.parent.parent
+            # In Docker: /app/orchestrator/profile.py -> project_root for 'ai' is parent.parent (because of volume mapping)
+            
+            base_path = Path(__file__).resolve().parent
+            
+            # Look for project root by finding the 'ai' directory or project marker
+            project_root = base_path
+            found = False
+            for _ in range(4):  # Check up to 4 levels up
+                if (project_root / "ai").is_dir():
+                    found = True
+                    break
+                if project_root.parent == project_root: # Root reached
+                    break
+                project_root = project_root.parent
+            
+            # Fallback to default parent.parent.parent if not found
+            if not found:
+                project_root = Path(__file__).resolve().parent.parent.parent
+                
             self.profile_path = project_root / settings.profile_path
     
     def load(self) -> DigitalProfile:
