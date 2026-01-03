@@ -53,9 +53,18 @@ class CoreAgent(BaseAgent):
             ))
         
         # Add current user message
+        user_msg_with_guard = context.user_message
+        if not context.history:
+            # Special instruction if history is empty to prevent jumping to conclusions based on partial RAG
+            user_msg_with_guard = (
+                f"[SYSTEM NOTE: Диалог только начался, истории сообщений нет. "
+                f"Будь осторожен с выводами, основываясь только на отрывочных воспоминаниях.]\n"
+                f"{context.user_message}"
+            )
+            
         messages.append(LLMMessage(
             role="user",
-            content=context.user_message
+            content=user_msg_with_guard
         ))
         
         # Call LLM

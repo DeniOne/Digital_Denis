@@ -73,6 +73,13 @@ class RequestRouter:
         # Get chat history from Redis
         history = await short_term_memory.get_chat_history(str(session_id))
         
+        logger.info(
+            "request_received",
+            session_id=str(session_id),
+            history_len=len(history),
+            user_id=str(user_id) if user_id else None
+        )
+        
         # Get relevant memories
         memories = []
         if db:

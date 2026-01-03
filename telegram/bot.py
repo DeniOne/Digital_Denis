@@ -7,6 +7,7 @@ Telegram interface for Digital Den.
 
 import os
 import logging
+import uuid
 from pathlib import Path
 from datetime import date, timedelta
 import tempfile
@@ -46,6 +47,12 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Store session IDs per user
 user_sessions: dict[int, str] = {}
+
+def get_stable_session_id(telegram_id: int) -> str:
+    """Generate a stable UUID based on Telegram ID."""
+    # Using a fixed namespace for Digital Den sessions
+    NAMESPACE_DD = uuid.UUID('d3d1de1a-d3d1-4de1-a1d3-d3d1de1a2024')
+    return str(uuid.uuid5(NAMESPACE_DD, f"tg_user_{telegram_id}"))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -88,7 +95,8 @@ async def send_to_backend(user: any, message: str) -> str:
     """Send message to backend and get response."""
     
     user_id = user.id
-    session_id = user_sessions.get(user_id)
+    # Use stable session ID for Telegram by default to prevent context loss on bot restart
+    session_id = user_sessions.get(user_id) or get_stable_session_id(user_id)
     
     payload = {
         "telegram_id": user_id,
@@ -136,10 +144,21 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я — Digital Den, твой когнитивный партнёр.\n\n"
         "Можешь писать мне текст или отправлять голосовые сообщения.\n\n"
         "Команды:\n"
-        "/start — начать заново\n"
+        "/start — общее приветствие\n"
+        "/reset — начать диалог заново (очистить контекст)\n"
         "/schedule — моё расписание\n"
         "/memory — последние воспоминания\n"
         "/help — справка"
+    )
+
+async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /reset command — start a new session."""
+    user = update.effective_user
+    new_session_id = str(uuid.uuid4())
+    user_sessions[user.id] = new_session_id
+    await update.message.reply_text(
+        "🧠 Контекст диалога очищен. Мы начали новую сессию.\n"
+        "О чем хочешь поговорить?"
     )
 
 
@@ -349,6 +368,7 @@ def main():
     
     # Add handlers
     app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("reset", reset_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("memory", memory_command))
     app.add_handler(CommandHandler("schedule", schedule_command))
