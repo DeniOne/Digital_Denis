@@ -92,16 +92,30 @@ class Settings(BaseSettings):
     class Config:
         # Load .env from project root (parent of backend/)
         from pathlib import Path
-        # Try to find .env by looking up from current file
+        # Multi-level .env file detection
         @staticmethod
         def find_env_file():
+            # 1. Try relative to current working directory
+            try:
+                cwd_env = Path.cwd() / ".env"
+                if cwd_env.exists():
+                    return cwd_env
+            except Exception:
+                pass
+                
+            # 2. Try walking up from this file
             base = Path(__file__).resolve().parent
-            for _ in range(4):
+            for _ in range(5):
                 if (base / ".env").exists():
                     return base / ".env"
                 if base.parent == base:
                     break
                 base = base.parent
+                
+            # 3. Explicit Docker fallback
+            if Path("/app/.env").exists():
+                return Path("/app/.env")
+                
             return Path(__file__).resolve().parent.parent.parent / ".env" # Fallback
 
         env_file = find_env_file()

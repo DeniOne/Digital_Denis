@@ -142,28 +142,44 @@ class ProfileLoader:
         if profile_path:
             self.profile_path = Path(profile_path)
         else:
-            # Smart project root detection
-            # Locally: backend/orchestrator/profile.py -> project_root is parent.parent.parent
-            # In Docker: /app/orchestrator/profile.py -> project_root for 'ai' is parent.parent (because of volume mapping)
+            # Multi-level project root detection for maximum robustness
+            project_root = None
             
-            base_path = Path(__file__).resolve().parent
+            # 1. Try relative to current working directory (Common in Docker /app)
+            try:
+                cwd_root = Path.cwd()
+                if (cwd_root / "ai").is_dir():
+                    project_root = cwd_root
+            except Exception:
+                pass
+                
+            # 2. Try walking up from this file (Common in local dev)
+            if not project_root:
+                base_path = Path(__file__).resolve().parent
+                temp_root = base_path
+                for _ in range(5):
+                    if (temp_root / "ai").is_dir():
+                        project_root = temp_root
+                        break
+                    if temp_root.parent == temp_root:
+                        break
+                    temp_root = temp_root.parent
             
-            # Look for project root by finding the 'ai' directory or project marker
-            project_root = base_path
-            found = False
-            for _ in range(4):  # Check up to 4 levels up
-                if (project_root / "ai").is_dir():
-                    found = True
-                    break
-                if project_root.parent == project_root: # Root reached
-                    break
-                project_root = project_root.parent
-            
-            # Fallback to default parent.parent.parent if not found
-            if not found:
+            # 3. Explicit Docker fallback
+            if not project_root and Path("/app/ai").is_dir():
+                project_root = Path("/app")
+                
+            # 4. Final fallback to legacy logic
+            if not project_root:
                 project_root = Path(__file__).resolve().parent.parent.parent
                 
-            self.profile_path = project_root / settings.profile_path
+            self.profile_path = (project_root / settings.profile_path).resolve()
+            
+            # Debug info (will show in docker logs)
+            if not self.profile_path.exists():
+                print(f"🔍 DEBUG KAIZEN: Profile NOT found at {self.profile_path}")
+                print(f"🔍 DEBUG KAIZEN: CWD={Path.cwd()}, File={Path(__file__).resolve()}")
+                print(f"🔍 DEBUG KAIZEN: Project Root resolved to {project_root}")
     
     def load(self) -> DigitalProfile:
         """Load profile from YAML."""
