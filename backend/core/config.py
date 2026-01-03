@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     json_logs: bool = False
     
     # Profile path (relative to project root)
-    profile_path: str = "../ai/profiles/den.yaml"
+    profile_path: str = "ai/profiles/den.yaml"
     
     class Config:
         # Load .env from project root (parent of backend/)
