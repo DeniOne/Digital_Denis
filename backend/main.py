@@ -183,7 +183,12 @@ app.include_router(api_router)
 # CORS Middleware - Must be added LAST to be the outermost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://digital-denis.app"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://151.243.109.210:3000",
+        "https://digital-denis.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
