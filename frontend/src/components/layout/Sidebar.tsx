@@ -26,6 +26,7 @@ export default function Sidebar() {
 
     return (
         <aside
+            suppressHydrationWarning
             className={`fixed left-0 top-0 h-screen bg-zinc-900 border-r border-zinc-800 
         transition-all duration-300 z-40
         ${sidebarOpen ? 'w-56' : 'w-16'}`}
