@@ -1,5 +1,5 @@
 """
-Digital Denis — Agent Unit Tests
+Digital Den — Agent Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for all agent implementations.

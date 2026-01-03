@@ -1,5 +1,5 @@
 """
-Digital Denis — Clustering Service
+Digital Den — Clustering Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Unsupervised clustering of memory embeddings using HDBSCAN.

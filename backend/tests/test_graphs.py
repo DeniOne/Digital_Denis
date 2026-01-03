@@ -1,5 +1,5 @@
 """
-Digital Denis — Mind Map Graph Unit Tests
+Digital Den — Mind Map Graph Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for graphs.py and mind map functionality.

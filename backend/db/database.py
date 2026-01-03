@@ -1,5 +1,5 @@
 """
-Digital Denis — Database Connection
+Digital Den — Database Connection
 ═══════════════════════════════════════════════════════════════════════════
 
 Async database connection management.

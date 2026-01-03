@@ -1,5 +1,5 @@
 """
-Digital Denis — Topic Generation Service
+Digital Den — Topic Generation Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Uses LLM to name clusters and extract keywords.

@@ -112,7 +112,7 @@ export function InstallPrompt() {
                                 Установить приложение
                             </h3>
                             <p className="mt-1 text-sm text-zinc-400">
-                                Добавьте Digital Denis на главный экран для быстрого доступа
+                                Добавьте Digital Den на главный экран для быстрого доступа
                             </p>
                         </div>
                     </div>

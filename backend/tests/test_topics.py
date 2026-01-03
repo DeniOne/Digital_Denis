@@ -1,5 +1,5 @@
 """
-Digital Denis — Topic Intelligence Unit Tests
+Digital Den — Topic Intelligence Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for topics.py and topic extraction.

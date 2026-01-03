@@ -1,5 +1,5 @@
 """
-Alembic Environment Configuration for Digital Denis
+Alembic Environment Configuration for Digital Den
 ═══════════════════════════════════════════════════════════════════════════
 
 Configures Alembic to work with our models and environment.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Base Agent
+Digital Den — Base Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Abstract base class for all agents.

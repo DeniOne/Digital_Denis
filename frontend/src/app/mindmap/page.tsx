@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Mind Map Page
+ * Digital Den — Mind Map Page
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

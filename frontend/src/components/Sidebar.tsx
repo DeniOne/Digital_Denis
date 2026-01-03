@@ -31,7 +31,7 @@ export default function Sidebar() {
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <BrainCircuit size={20} />
                     </div>
-                    <span>Digital Denis</span>
+                    <span>Digital Den</span>
                 </div>
             </div>
 

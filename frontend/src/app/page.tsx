@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Dashboard Page (Main)
+ * Digital Den — Dashboard Page (Main)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -108,7 +108,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold">С возвращением, Денис</h1>
+        <h1 className="text-2xl font-bold">С возвращением, Дэн</h1>
         <p className="text-zinc-400 mt-1">Вот ваш когнитивный обзор на сегодня</p>
       </div>
 
@@ -217,7 +217,7 @@ export default function Dashboard() {
         >
           <span className="text-2xl">💬</span>
           <p className="font-medium mt-2">Начать чат</p>
-          <p className="text-xs text-zinc-400">Поговорить с Денисом</p>
+          <p className="text-xs text-zinc-400">Поговорить с Дэном</p>
         </Link>
 
         <Link

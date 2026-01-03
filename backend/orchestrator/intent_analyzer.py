@@ -1,5 +1,5 @@
 """
-Digital Denis — Intent Analyzer
+Digital Den — Intent Analyzer
 ═══════════════════════════════════════════════════════════════════════════
 
 Advanced intent analysis for incoming user requests.

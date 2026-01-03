@@ -1,5 +1,5 @@
 """
-Digital Denis — Mind Map Graph Builder
+Digital Den — Mind Map Graph Builder
 ═══════════════════════════════════════════════════════════════════════════
 
 Graph construction and management for mind map visualization.

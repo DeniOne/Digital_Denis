@@ -1,5 +1,5 @@
 """
-Digital Denis — Reminder Worker
+Digital Den — Reminder Worker
 ═══════════════════════════════════════════════════════════════════════════
 
 Celery tasks for processing and sending reminders.

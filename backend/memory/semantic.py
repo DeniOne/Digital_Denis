@@ -1,5 +1,5 @@
 """
-Digital Denis — Semantic Memory Service
+Digital Den — Semantic Memory Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Facade for semantic search and embedding management.

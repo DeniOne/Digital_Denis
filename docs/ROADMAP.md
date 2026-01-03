@@ -1,4 +1,4 @@
-# 🗺️ Digital Denis — Roadmap
+# 🗺️ Digital Den — Roadmap
 
 **Current Version:** v0.1.0 (MVP)  
 **Status:** ✅ Stable

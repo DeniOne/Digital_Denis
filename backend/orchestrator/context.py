@@ -1,5 +1,5 @@
 """
-Digital Denis — Context Manager
+Digital Den — Context Manager
 ═══════════════════════════════════════════════════════════════════════════
 
 Assembles context for agents: session, memory, profile.

@@ -1,5 +1,5 @@
 """
-Digital Denis — CAL Unit Tests
+Digital Den — CAL Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for Cognitive Analytics Layer.
@@ -222,6 +222,7 @@ class TestCALModels:
             severity="high",
             title="Test anomaly",
             interpretation="Something unusual happened",
+            status="new",  # Explicitly set since Column defaults only apply on DB insert
         )
         
         assert anomaly.severity == "high"

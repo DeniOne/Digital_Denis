@@ -1,5 +1,5 @@
 """
-Digital Denis — Redis Client
+Digital Den — Redis Client
 ═══════════════════════════════════════════════════════════════════════════
 
 Short-term memory operations with Redis.

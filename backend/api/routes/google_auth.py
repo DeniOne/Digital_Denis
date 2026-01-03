@@ -1,5 +1,5 @@
 """
-Digital Denis — Google Auth Routes
+Digital Den — Google Auth Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 API endpoints for Google OAuth2 authentication.

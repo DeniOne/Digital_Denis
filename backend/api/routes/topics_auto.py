@@ -1,5 +1,5 @@
 """
-Digital Denis — Topic Auto-Generation API
+Digital Den — Topic Auto-Generation API
 ═══════════════════════════════════════════════════════════════════════════
 
 Endpoints for triggering and managing auto-generated topics.

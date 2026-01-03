@@ -1,5 +1,5 @@
 """
-Digital Denis — Memory Agent v2 Unit Tests
+Digital Den — Memory Agent v2 Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for extended Memory Agent.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Schedule API Routes
+Digital Den — Schedule API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 API endpoints for schedule management.
@@ -246,6 +246,19 @@ async def mark_reminder_done(
 ):
     """Mark reminder instance as done/confirmed."""
     
+    # First try ScheduleItem (primary model for reminders)
+    result = await db.execute(
+        select(ScheduleItem).where(ScheduleItem.id == instance_id)
+    )
+    item = result.scalar_one_or_none()
+    
+    if item:
+        item.status = ItemStatus.COMPLETED
+        await db.commit()
+        logger.info("reminder_confirmed", instance_id=str(instance_id))
+        return {"message": "Reminder confirmed"}
+    
+    # Fallback: try ReminderInstance
     result = await db.execute(
         select(ReminderInstance).where(ReminderInstance.id == instance_id)
     )
@@ -262,6 +275,7 @@ async def mark_reminder_done(
     return {"message": "Reminder confirmed"}
 
 
+
 @reminders_router.post("/{instance_id}/snooze")
 async def snooze_reminder(
     instance_id: UUID,
@@ -270,6 +284,20 @@ async def snooze_reminder(
 ):
     """Snooze reminder for specified minutes."""
     
+    # First try ScheduleItem (primary model for reminders)
+    result = await db.execute(
+        select(ScheduleItem).where(ScheduleItem.id == instance_id)
+    )
+    item = result.scalar_one_or_none()
+    
+    if item:
+        item.status = ItemStatus.PENDING  # Will be sent again
+        item.start_at = datetime.utcnow() + timedelta(minutes=minutes)
+        await db.commit()
+        logger.info("reminder_snoozed", instance_id=str(instance_id), minutes=minutes)
+        return {"message": f"Reminder snoozed for {minutes} minutes"}
+    
+    # Fallback: try ReminderInstance
     result = await db.execute(
         select(ReminderInstance).where(ReminderInstance.id == instance_id)
     )
@@ -294,6 +322,19 @@ async def skip_reminder(
 ):
     """Mark reminder as skipped/missed."""
     
+    # First try ScheduleItem (primary model for reminders)
+    result = await db.execute(
+        select(ScheduleItem).where(ScheduleItem.id == instance_id)
+    )
+    item = result.scalar_one_or_none()
+    
+    if item:
+        item.status = ItemStatus.CANCELLED
+        await db.commit()
+        logger.info("reminder_skipped", instance_id=str(instance_id))
+        return {"message": "Reminder skipped"}
+    
+    # Fallback: try ReminderInstance
     result = await db.execute(
         select(ReminderInstance).where(ReminderInstance.id == instance_id)
     )
@@ -307,3 +348,4 @@ async def skip_reminder(
     
     logger.info("reminder_skipped", instance_id=str(instance_id))
     return {"message": "Reminder skipped"}
+

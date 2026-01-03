@@ -1,5 +1,5 @@
 """
-Digital Denis — Authentication Logic
+Digital Den — Authentication Logic
 ═══════════════════════════════════════════════════════════════════════════
 
 JWT token management and Telegram OAuth validation.

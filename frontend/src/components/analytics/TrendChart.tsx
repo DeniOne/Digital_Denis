@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Trend Chart (Recharts)
+ * Digital Den — Trend Chart (Recharts)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

@@ -1,5 +1,5 @@
 """
-Digital Denis — Decision Analysis API Routes
+Digital Den — Decision Analysis API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for decision analysis.

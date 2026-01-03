@@ -1,3 +1,3 @@
 """
-Digital Denis — Voice Processing Package
+Digital Den — Voice Processing Package
 """

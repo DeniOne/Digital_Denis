@@ -1,5 +1,5 @@
 """
-Digital Denis — Core Agent
+Digital Den — Core Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Main dialogue agent that embodies the user's thinking style.
@@ -17,7 +17,7 @@ class CoreAgent(BaseAgent):
     Core Agent — главный диалоговый агент.
     
     Ответственности:
-    - Ведёт диалог от лица Digital Denis
+    - Ведёт диалог от лица Digital Den
     - Применяет профиль пользователя
     - Структурирует мышление
     - Идентифицирует решения для сохранения

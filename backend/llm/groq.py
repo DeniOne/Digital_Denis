@@ -1,5 +1,5 @@
 """
-Digital Denis — Groq LLM Provider
+Digital Den — Groq LLM Provider
 ═══════════════════════════════════════════════════════════════════════════
 
 Groq API integration for fast/cheap LLM calls and voice transcription.

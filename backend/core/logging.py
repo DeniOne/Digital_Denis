@@ -1,5 +1,5 @@
 """
-Digital Denis — Structured Logging
+Digital Den — Structured Logging
 ═══════════════════════════════════════════════════════════════════════════
 
 Configures structlog for JSON output in production and colored console output

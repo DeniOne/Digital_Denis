@@ -1,5 +1,5 @@
 """
-Digital Denis — Authentication API Routes
+Digital Den — Authentication API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 Endpoints for user authentication and profile management.

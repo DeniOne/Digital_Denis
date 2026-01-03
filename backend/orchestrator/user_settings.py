@@ -1,5 +1,5 @@
 """
-Digital Denis — User Settings Service
+Digital Den — User Settings Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Service for loading and applying user settings.

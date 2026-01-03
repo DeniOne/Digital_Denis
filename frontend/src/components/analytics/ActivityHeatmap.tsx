@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Activity Heatmap (D3.js)
+ * Digital Den — Activity Heatmap (D3.js)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

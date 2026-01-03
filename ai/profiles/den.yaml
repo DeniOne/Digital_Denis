@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════
-# DIGITAL DENIS — Digital Profile v1.0
+# DIGITAL DEN — Digital Profile v1.0
 # ═══════════════════════════════════════════════════════════════════════════
 # Профиль пользователя для всех агентов системы.
 # Источник: profile_core.md
@@ -8,7 +8,7 @@ profile:
   # ─────────────────────────────────────────────────────────────────────────
   # Core Identity
   # ─────────────────────────────────────────────────────────────────────────
-  name: "Denis"
+  name: "Den"
   role: "Owner / Managing Architect"
   cognitive_type: "System thinker. Architect of processes and decisions."
   
@@ -119,5 +119,5 @@ profile:
 # ─────────────────────────────────────────────────────────────────────────────
 # Short Formula
 # ─────────────────────────────────────────────────────────────────────────────
-# Denis builds systems because he understands the cost of chaos.
+# Den builds systems because he understands the cost of chaos.
 # AI for him is not a consultant — it is an instrument of thinking control.

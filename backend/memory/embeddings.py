@@ -1,5 +1,5 @@
 """
-Digital Denis — Embedding Service
+Digital Den — Embedding Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Handles generation and storage of vector embeddings.

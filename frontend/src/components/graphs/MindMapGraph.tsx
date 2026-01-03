@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Mind Map Graph (Cytoscape.js)
+ * Digital Den — Mind Map Graph (Cytoscape.js)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

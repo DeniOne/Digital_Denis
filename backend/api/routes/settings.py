@@ -1,5 +1,5 @@
 """
-Digital Denis — Settings API Routes
+Digital Den — Settings API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for AI Control settings and Rules Engine.

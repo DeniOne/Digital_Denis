@@ -1,5 +1,5 @@
 """
-Digital Denis — Anomaly Detection API Routes
+Digital Den — Anomaly Detection API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for anomaly detection and management.

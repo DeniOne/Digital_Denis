@@ -1,5 +1,5 @@
 """
-Digital Denis — Memory Agent v2
+Digital Den — Memory Agent v2
 ═══════════════════════════════════════════════════════════════════════════
 
 Extended agent for memory management: saving, aggregation, forgetting, retrieval.

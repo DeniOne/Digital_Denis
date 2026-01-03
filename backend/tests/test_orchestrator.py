@@ -1,5 +1,5 @@
 """
-Digital Denis — Orchestrator Unit Tests
+Digital Den — Orchestrator Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for router.py and context.py
@@ -19,10 +19,22 @@ class TestRequestRouter:
     """Tests for RequestRouter class."""
     
     @pytest.fixture
-    def mock_groq(self):
-        """Mock Groq LLM client."""
-        with patch('orchestrator.router.groq') as mock:
-            mock.complete_simple = AsyncMock(return_value="strategic")
+    def mock_intent_analyzer(self):
+        """Mock intent analyzer."""
+        with patch('orchestrator.router.intent_analyzer') as mock:
+            # Create a mock IntentAnalysis
+            from orchestrator.intent_analyzer import RequestCategory, EmotionalState, ActionType
+            mock_analysis = MagicMock()
+            mock_analysis.category = RequestCategory.STRATEGIC
+            mock_analysis.confidence = 0.9
+            mock_analysis.emotional_state = EmotionalState.NEUTRAL
+            mock_analysis.urgency = 0.5
+            mock_analysis.action_type = ActionType.ANALYZE
+            mock_analysis.requires_clarification = False
+            mock_analysis.clarification_question = None
+            mock_analysis.topics = ["business"]
+            
+            mock.analyze = AsyncMock(return_value=mock_analysis)
             yield mock
     
     @pytest.fixture
@@ -46,37 +58,39 @@ class TestRequestRouter:
         """Mock profile loader."""
         with patch('orchestrator.router.get_profile') as mock:
             profile = MagicMock()
-            profile.get_system_prompt.return_value = "You are Digital Denis."
+            profile.get_system_prompt.return_value = "You are Digital Den."
             mock.return_value = profile
             yield mock
     
     @pytest.mark.asyncio
-    async def test_classify_request_strategic(self, mock_groq, mock_profile):
-        """Test classification of strategic requests."""
+    async def test_route_with_intent_analysis(
+        self, 
+        mock_intent_analyzer, 
+        mock_short_term, 
+        mock_memory_agent,
+        mock_profile
+    ):
+        """Test that route uses intent analyzer."""
         from orchestrator.router import RequestRouter
+        from agents.base import AgentResponse
         
-        router = RequestRouter()
-        result = await router._classify_request("What is our 5-year vision?")
-        
-        assert result == "strategic"
-        mock_groq.complete_simple.assert_called_once()
-    
-    @pytest.mark.asyncio
-    async def test_classify_request_fallback(self, mock_groq, mock_profile):
-        """Test fallback to operational when classification fails."""
-        mock_groq.complete_simple = AsyncMock(side_effect=Exception("API Error"))
-        
-        from orchestrator.router import RequestRouter
-        
-        router = RequestRouter()
-        result = await router._classify_request("Some message")
-        
-        assert result == "operational"
+        with patch('orchestrator.router.core_agent') as mock_agent:
+            mock_agent.run = AsyncMock(return_value=AgentResponse(
+                content="Test response",
+                agent="core",
+            ))
+            mock_agent.name = "core"
+            
+            router = RequestRouter()
+            response = await router.route("What is our 5-year vision?", session_id=None)
+            
+            assert response.content == "Test response"
+            mock_intent_analyzer.analyze.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_route_creates_session(
         self, 
-        mock_groq, 
+        mock_intent_analyzer,
         mock_short_term, 
         mock_memory_agent,
         mock_profile
@@ -90,12 +104,40 @@ class TestRequestRouter:
                 content="Test response",
                 agent="core",
             ))
+            mock_agent.name = "core"
             
             router = RequestRouter()
             response = await router.route("Hello", session_id=None)
             
             assert response.content == "Test response"
             mock_short_term.add_message.assert_called()
+    
+    @pytest.mark.asyncio
+    async def test_route_saves_to_memory(
+        self, 
+        mock_intent_analyzer,
+        mock_short_term, 
+        mock_memory_agent,
+        mock_profile
+    ):
+        """Test that route saves to memory when save_to_memory is True."""
+        from orchestrator.router import RequestRouter
+        from agents.base import AgentResponse
+        
+        mock_db = MagicMock()
+        
+        with patch('orchestrator.router.core_agent') as mock_agent:
+            mock_agent.run = AsyncMock(return_value=AgentResponse(
+                content="Test response",
+                agent="core",
+                save_to_memory=True,
+            ))
+            mock_agent.name = "core"
+            
+            router = RequestRouter()
+            response = await router.route("Remember this", session_id=None, db=mock_db)
+            
+            mock_memory_agent.save_from_response.assert_called()
 
 
 class TestContextManager:

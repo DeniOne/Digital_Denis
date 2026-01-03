@@ -1,5 +1,5 @@
 /**
- * Digital Denis — React Query Provider
+ * Digital Den — React Query Provider
  * ═══════════════════════════════════════════════════════════════════════════
  * 
  * QueryClientProvider wrapper for React Query.

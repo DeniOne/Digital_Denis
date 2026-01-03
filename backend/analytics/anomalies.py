@@ -1,5 +1,5 @@
 """
-Digital Denis — Anomaly Detection Engine
+Digital Den — Anomaly Detection Engine
 ═══════════════════════════════════════════════════════════════════════════
 
 Advanced anomaly detection for thinking patterns.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Topic Orchestrator
+Digital Den — Topic Orchestrator
 ═══════════════════════════════════════════════════════════════════════════
 
 Orchestrates clustering, naming, and topic creation.

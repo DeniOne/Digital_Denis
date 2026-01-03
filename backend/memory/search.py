@@ -1,5 +1,5 @@
 """
-Digital Denis — Search Service
+Digital Den — Search Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Implements advanced search capabilities:

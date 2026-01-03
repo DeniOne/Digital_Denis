@@ -1,5 +1,5 @@
 """
-Digital Denis — Analyst Agent
+Digital Den — Analyst Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Agent for data analysis, numbers, and logical constructions.
@@ -34,7 +34,7 @@ class AnalystAgent(BaseAgent):
     writes_to_memory = True
     is_synchronous = True
     
-    ANALYST_SYSTEM_PROMPT = """Ты — аналитический модуль системы Digital Denis.
+    ANALYST_SYSTEM_PROMPT = """Ты — аналитический модуль системы Digital Den.
 
 Твоя специализация:
 - Анализ цифр, метрик и данных

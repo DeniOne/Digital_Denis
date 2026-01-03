@@ -1,5 +1,5 @@
 """
-Digital Denis — Sentiment Analysis Service
+Digital Den — Sentiment Analysis Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Simple sentiment analysis engine using keyword matching for MVP.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Monitoring & Metrics
+Digital Den — Monitoring & Metrics
 ═══════════════════════════════════════════════════════════════════════════
 
 Prometheus metrics definitions and collection utilities.

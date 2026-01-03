@@ -9,13 +9,13 @@ import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
-  title: "Digital Denis | Cognitive OS",
+  title: "Digital Den | Cognitive OS",
   description: "Твой когнитивный ассистент — Personal Cognitive Operating System",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Digital Denis",
+    title: "Digital Den",
   },
   formatDetection: {
     telephone: false,

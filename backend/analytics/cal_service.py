@@ -1,5 +1,5 @@
 """
-Digital Denis — CAL Service
+Digital Den — CAL Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Cognitive Analytics Layer main service.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Schedule Service
+Digital Den — Schedule Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Service for managing schedules: events, tasks, reminders.

@@ -1,5 +1,5 @@
 """
-Digital Denis — API Tests
+Digital Den — API Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Integration tests for API endpoints.
@@ -36,10 +36,10 @@ class TestMemoryAPI:
         return db
     
     def test_memory_item_schema(self):
-        from api.routes.memory import MemoryItemSchema
+        from api.routes.memory import MemoryItemResponse
         
-        item = MemoryItemSchema(
-            id=uuid4(),
+        item = MemoryItemResponse(
+            id=str(uuid4()),  # Use string, not UUID
             item_type="decision",
             content="Test decision",
             created_at="2024-01-01T00:00:00",

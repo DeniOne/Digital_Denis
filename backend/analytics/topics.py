@@ -1,5 +1,5 @@
 """
-Digital Denis — Topic Intelligence Engine
+Digital Den — Topic Intelligence Engine
 ═══════════════════════════════════════════════════════════════════════════
 
 Automatic topic extraction and classification for memory items.

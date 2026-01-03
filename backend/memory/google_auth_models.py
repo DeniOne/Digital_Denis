@@ -1,5 +1,5 @@
 """
-Digital Denis — Google Auth Models
+Digital Den — Google Auth Models
 ═══════════════════════════════════════════════════════════════════════════
 
 Models for storing Google OAuth2 tokens.

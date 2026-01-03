@@ -1,5 +1,5 @@
 /**
- * Digital Denis — React Query Hooks
+ * Digital Den — React Query Hooks
  * ═══════════════════════════════════════════════════════════════════════════
  * 
  * Custom hooks for data fetching with React Query.

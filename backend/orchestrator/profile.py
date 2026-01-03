@@ -1,5 +1,5 @@
 """
-Digital Denis — Digital Profile Loader
+Digital Den — Digital Profile Loader
 ═══════════════════════════════════════════════════════════════════════════
 
 Loads and manages the user's digital profile from YAML.
@@ -159,5 +159,17 @@ def get_profile() -> DigitalProfile:
     return loader.load()
 
 
-# Global profile instance
-profile = get_profile()
+# Lazy-loaded profile instance (to avoid import-time errors)
+_profile_instance: Optional[DigitalProfile] = None
+
+
+def get_profile_instance() -> DigitalProfile:
+    """Get global profile instance with lazy loading."""
+    global _profile_instance
+    if _profile_instance is None:
+        _profile_instance = get_profile()
+    return _profile_instance
+
+
+# For backward compatibility - use get_profile_instance() instead
+profile = None  # Will be loaded lazily

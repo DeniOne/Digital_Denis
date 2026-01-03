@@ -1,5 +1,5 @@
 """
-Digital Denis — Audit Service
+Digital Den — Audit Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Service for recording audit logs for security and compliance.

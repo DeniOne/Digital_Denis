@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Sidebar Component
+ * Digital Den — Sidebar Component
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -33,7 +33,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
                 {sidebarOpen && (
-                    <span className="font-bold text-lg">🧠 Цифровой Денис</span>
+                    <span className="font-bold text-lg">🧠 Цифровой Дэн</span>
                 )}
                 {!sidebarOpen && <span className="text-xl">🧠</span>}
                 <button

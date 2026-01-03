@@ -1,8 +1,8 @@
 """
-Digital Denis — Main Celery Tasks
+Digital Den — Main Celery Tasks
 ═══════════════════════════════════════════════════════════════════════════
 
-Core background tasks for Digital Denis system.
+Core background tasks for Digital Den system.
 Includes: embeddings, memory aggregation, maintenance.
 """
 

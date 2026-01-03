@@ -1,5 +1,5 @@
 """
-Digital Denis — API Routes
+Digital Den — API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 Unified API router combining all endpoints.

@@ -71,7 +71,7 @@ export default function IntegrationsSettings() {
         <div className="space-y-8">
             <div>
                 <h2 className="text-xl font-semibold text-white mb-1">Интеграции</h2>
-                <p className="text-gray-400 text-sm">Подключение внешних сервисов к Digital Denis</p>
+                <p className="text-gray-400 text-sm">Подключение внешних сервисов к Digital Den</p>
             </div>
 
             <div className="grid gap-6">
@@ -132,7 +132,7 @@ export default function IntegrationsSettings() {
                     ) : (
                         <div className="space-y-4">
                             <p className="text-gray-400 text-sm italic">
-                                Подключите Google Календарь, чтобы Денис мог видеть ваше расписание и добавлять важные события автоматически.
+                                Подключите Google Календарь, чтобы Дэн мог видеть ваше расписание и добавлять важные события автоматически.
                             </p>
                             <button
                                 onClick={handleConnect}

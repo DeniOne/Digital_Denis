@@ -1,5 +1,5 @@
 """
-Digital Denis — Meta-Analyst Agent
+Digital Den — Meta-Analyst Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Asynchronous agent for analyzing thinking patterns and generating reports.
@@ -59,7 +59,7 @@ class MetaAnalystAgent(BaseAgent):
     writes_to_memory = True
     is_synchronous = False  # Async agent
     
-    META_ANALYST_PROMPT = """Ты — мета-аналитический модуль системы Digital Denis.
+    META_ANALYST_PROMPT = """Ты — мета-аналитический модуль системы Digital Den.
 
 Ты анализируешь ПАТТЕРНЫ мышления пользователя, а не отдельные запросы.
 

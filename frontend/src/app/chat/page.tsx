@@ -140,7 +140,7 @@ export default function ChatPage() {
                             <Bot size={16} />
                         </div>
                         <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-zinc-500 text-sm italic">
-                            Digital Denis анализирует контекст...
+                            Digital Den анализирует контекст...
                         </div>
                     </div>
                 )}

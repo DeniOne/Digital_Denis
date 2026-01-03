@@ -11,7 +11,7 @@ export interface VoiceOption {
 }
 
 const DEFAULT_VOICES: VoiceOption[] = [
-    { id: 'pMsXg9Y9C95gIn6ycYid', name: 'Denis (Deep)' },
+    { id: 'pMsXg9Y9C95gIn6ycYid', name: 'Den (Deep)' },
     { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella (Soft)' },
     { id: 'ErXwVqcDCOwaoxvTidca', name: 'Antoni (Professional)' },
 ];

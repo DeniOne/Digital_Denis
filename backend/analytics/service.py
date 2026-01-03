@@ -1,5 +1,5 @@
 """
-Digital Denis — Analytics Service
+Digital Den — Analytics Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Core metrics calculation and data aggregation for the dashboard.

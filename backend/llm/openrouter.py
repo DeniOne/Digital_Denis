@@ -1,5 +1,5 @@
 """
-Digital Denis — OpenRouter LLM Provider
+Digital Den — OpenRouter LLM Provider
 ═══════════════════════════════════════════════════════════════════════════
 
 OpenRouter API integration for LLM calls.
@@ -32,7 +32,7 @@ class OpenRouterProvider(BaseLLMProvider):
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": "https://digital-denis.app",
-            "X-Title": "Digital Denis",
+            "X-Title": "Digital Den",
             "Content-Type": "application/json",
         }
     

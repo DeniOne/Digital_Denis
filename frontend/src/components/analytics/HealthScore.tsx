@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Health Score Gauge (Recharts)
+ * Digital Den — Health Score Gauge (Recharts)
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

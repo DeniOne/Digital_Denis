@@ -1,5 +1,5 @@
 """
-Digital Denis — Mind Map API Routes
+Digital Den — Mind Map API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for mind map graph.

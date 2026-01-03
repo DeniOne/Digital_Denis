@@ -1,5 +1,5 @@
 """
-Digital Denis — Long-term Memory
+Digital Den — Long-term Memory
 ═══════════════════════════════════════════════════════════════════════════
 
 PostgreSQL-based long-term memory operations.

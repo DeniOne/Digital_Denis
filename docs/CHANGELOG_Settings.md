@@ -1,5 +1,5 @@
 # Settings Implementation Log
-## Digital Denis — AI Control & Rules Engine
+## Digital Den — AI Control & Rules Engine
 
 ---
 

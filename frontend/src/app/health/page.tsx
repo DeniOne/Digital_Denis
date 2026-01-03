@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Cognitive Health Page
+ * Digital Den — Cognitive Health Page
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

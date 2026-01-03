@@ -1,5 +1,5 @@
 """
-Digital Denis — Memory API Routes
+Digital Den — Memory API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 API endpoints for memory operations.

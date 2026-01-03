@@ -1,5 +1,5 @@
 """
-Digital Denis — Email Notifications Service
+Digital Den — Email Notifications Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Gmail SMTP integration for sending email notifications.
@@ -29,7 +29,7 @@ class EmailConfig:
     smtp_port: int = 587
     sender_email: str = ""
     sender_password: str = ""  # App password for Gmail
-    sender_name: str = "Digital Denis"
+    sender_name: str = "Digital Den"
     
     @classmethod
     def from_env(cls) -> "EmailConfig":
@@ -39,7 +39,7 @@ class EmailConfig:
             smtp_port=int(os.getenv("SMTP_PORT", "587")),
             sender_email=os.getenv("GMAIL_SMTP_USER", ""),
             sender_password=os.getenv("GMAIL_SMTP_PASSWORD", ""),
-            sender_name=os.getenv("EMAIL_SENDER_NAME", "Digital Denis"),
+            sender_name=os.getenv("EMAIL_SENDER_NAME", "Digital Den"),
         )
     
     @property
@@ -87,7 +87,7 @@ def get_reminder_email_html(title: str, time_str: str, description: str = None) 
         <!-- Footer -->
         <div style="background:#f9f9f9;padding:20px;text-align:center;border-top:1px solid #eee;">
             <p style="color:#999;font-size:12px;margin:0;">
-                Digital Denis — Личный Когнитивный Помощник
+                Digital Den — Личный Когнитивный Помощник
             </p>
         </div>
     </div>
@@ -110,7 +110,7 @@ def get_reminder_email_text(title: str, time_str: str, description: str = None) 
     text += """
 
 ---
-Digital Denis — Личный Когнитивный Помощник
+Digital Den — Личный Когнитивный Помощник
 """
     return text
 
@@ -160,7 +160,7 @@ def get_schedule_summary_html(items: List[dict], date_str: str) -> str:
         <!-- Footer -->
         <div style="background:#f9f9f9;padding:20px;text-align:center;border-top:1px solid #eee;">
             <p style="color:#999;font-size:12px;margin:0;">
-                Digital Denis — Личный Когнитивный Помощник
+                Digital Den — Личный Когнитивный Помощник
             </p>
         </div>
     </div>

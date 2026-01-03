@@ -1,5 +1,5 @@
 """
-Digital Denis — Schedule Models
+Digital Den — Schedule Models
 ═══════════════════════════════════════════════════════════════════════════
 
 Models for schedule management: events, tasks, reminders.

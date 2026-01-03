@@ -1,5 +1,5 @@
 """
-Digital Denis — Backend API
+Digital Den — Backend API
 ═══════════════════════════════════════════════════════════════════════════
 
 Personal Cognitive Operating System - Backend Entry Point.
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""
     # Startup
-    print("🧠 Digital Denis starting...")
+    print("🧠 Digital Den starting...")
     print(f"   Language: {settings.system_language}")
     print(f"   Debug: {settings.debug}")
     print(f"   Model: {settings.default_model}")
@@ -40,11 +40,31 @@ async def lifespan(app: FastAPI):
     await short_term_memory.connect()
     print("   Redis: connected")
     
+    # Check migration status
+    try:
+        from core.migrations import check_migration_status, get_pending_migrations
+        is_up_to_date, status = check_migration_status()
+        pending = get_pending_migrations()
+        
+        if is_up_to_date:
+            print(f"   Migrations: ✅ up to date")
+        else:
+            print(f"   Migrations: ⚠️ {len(pending)} pending")
+            print(f"   Run: python manage.py migrate")
+    except Exception as e:
+        print(f"   Migrations: ⚠️ check failed ({e})")
+    
+    # Start reminder scheduler
+    from core.reminder_scheduler import reminder_scheduler
+    await reminder_scheduler.start()
+    
     yield
     
     # Shutdown
+    await reminder_scheduler.stop()
     await short_term_memory.disconnect()
-    print("🧠 Digital Denis shutting down...")
+    print("🧠 Digital Den shutting down...")
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -52,7 +72,7 @@ async def lifespan(app: FastAPI):
 # ═══════════════════════════════════════════════════════════════════════════
 
 app = FastAPI(
-    title="Digital Denis",
+    title="Digital Den",
     description="Personal Cognitive Operating System",
     version="0.1.0",
     lifespan=lifespan,
@@ -130,7 +150,7 @@ async def add_security_headers(request, call_next):
 async def root():
     """Root endpoint."""
     return {
-        "name": "Digital Denis",
+        "name": "Digital Den",
         "version": "0.1.0",
         "status": "running",
         "language": settings.system_language,

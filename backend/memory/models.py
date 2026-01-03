@@ -1,5 +1,5 @@
 """
-Digital Denis — Database Models
+Digital Den — Database Models
 ═══════════════════════════════════════════════════════════════════════════
 
 SQLAlchemy models for Memory Layer.

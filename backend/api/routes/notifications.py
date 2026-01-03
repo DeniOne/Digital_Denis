@@ -44,7 +44,7 @@ async def subscribe(
     # Send welcome push
     await send_push_notification(
         subscription.model_dump(),
-        "Digital Denis",
+        "Digital Den",
         "Уведомления успешно подключены!",
         {"type": "welcome"}
     )
@@ -78,7 +78,7 @@ async def test_push(
     count = 0
     for sub in subs:
         sub_info = {"endpoint": sub.endpoint, "keys": sub.keys}
-        success = await send_push_notification(sub_info, "Test Push", "This is a test notification from Digital Denis.")
+        success = await send_push_notification(sub_info, "Test Push", "This is a test notification from Digital Den.")
         if success:
             count += 1
             

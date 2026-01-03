@@ -1,5 +1,5 @@
 """
-Digital Denis — Logic Analysis Unit Tests
+Digital Den — Logic Analysis Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for logic.py and decision analysis.

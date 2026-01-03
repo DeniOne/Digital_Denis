@@ -1,5 +1,5 @@
 """
-Digital Denis — Re-indexing Script
+Digital Den — Re-indexing Script
 ═══════════════════════════════════════════════════════════════════════════
 
 Re-indexes all active memory items using the optimized embedding service.

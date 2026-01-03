@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Header Component
+ * Digital Den — Header Component
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
@@ -10,7 +10,7 @@ import { useUIStore, useAnalyticsStore, useSessionStore } from '@/lib/store';
 
 const pageTitles: Record<string, string> = {
     '/': 'Панель управления',
-    '/chat': 'Чат с Денисом',
+    '/chat': 'Чат с Дэном',
     '/schedule': 'Расписание и задачи',
     '/memory': 'Проводник памяти',
     '/topics': 'Темы и смыслы',
@@ -25,7 +25,7 @@ export default function Header() {
     const { unreadCount } = useAnalyticsStore();
     const { sessionId } = useSessionStore();
 
-    const title = pageTitles[pathname] || 'Digital Denis';
+    const title = pageTitles[pathname] || 'Digital Den';
 
     return (
         <header
@@ -75,7 +75,7 @@ export default function Header() {
                         <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
                             D
                         </span>
-                        <span className="hidden sm:inline text-sm">Denis</span>
+                        <span className="hidden sm:inline text-sm">Den</span>
                     </button>
                 </div>
             </div>

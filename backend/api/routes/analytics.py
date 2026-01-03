@@ -1,5 +1,5 @@
 """
-Digital Denis — Analytics API
+Digital Den — Analytics API
 ═══════════════════════════════════════════════════════════════════════════
 
 Endpoints for dashboard metrics and visualizations.

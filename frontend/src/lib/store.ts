@@ -1,8 +1,8 @@
 /**
- * Digital Denis — Zustand Store
+ * Digital Den — Zustand Store
  * ═══════════════════════════════════════════════════════════════════════════
  * 
- * Global state management for Digital Denis frontend.
+ * Global state management for Digital Den frontend.
  */
 
 import { create } from 'zustand';

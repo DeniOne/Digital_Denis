@@ -1,5 +1,5 @@
 """
-Digital Denis — CAL API Routes
+Digital Den — CAL API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for Cognitive Analytics Layer.

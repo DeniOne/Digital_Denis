@@ -1,5 +1,5 @@
 """
-Digital Denis — LLM Base Provider
+Digital Den — LLM Base Provider
 ═══════════════════════════════════════════════════════════════════════════
 
 Abstract base class for LLM providers.

@@ -1,5 +1,5 @@
 """
-Digital Denis — Google Calendar Service
+Digital Den — Google Calendar Service
 ═══════════════════════════════════════════════════════════════════════════
 
 Service for interacting with Google Calendar API and syncing items.
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 
 class GoogleCalendarService:
     """
-    Manages synchronization between Digital Denis Schedule and Google Calendar.
+    Manages synchronization between Digital Den Schedule and Google Calendar.
     """
     
     def __init__(self, db: AsyncSession):

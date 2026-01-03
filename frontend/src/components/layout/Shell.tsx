@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Shell Layout
+ * Digital Den — Shell Layout
  * ═══════════════════════════════════════════════════════════════════════════
  */
 

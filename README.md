@@ -1,6 +1,6 @@
-# Digital Denis — Personal Cognitive Operating System
+# Digital Den — Personal Cognitive Operating System
 
-**Digital Denis** — это персональная цифровая система для расширения когнитивных способностей, управления памятью и автоматизации задач.
+**Digital Den** — это персональная цифровая система для расширения когнитивных способностей, управления памятью и автоматизации задач.
 
 ---
 

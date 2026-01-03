@@ -1,5 +1,5 @@
 """
-Digital Denis — Request Router
+Digital Den — Request Router
 ═══════════════════════════════════════════════════════════════════════════
 
 Routes incoming requests to appropriate agents.

@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Full API Client
+ * Digital Den — Full API Client
  * ═══════════════════════════════════════════════════════════════════════════
  * 
  * Complete API client for all backend endpoints.

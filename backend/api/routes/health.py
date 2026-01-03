@@ -1,5 +1,5 @@
 """
-Digital Denis — Health API Routes
+Digital Den — Health API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for system health and cognitive health.

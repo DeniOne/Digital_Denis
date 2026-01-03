@@ -1,5 +1,5 @@
 """
-Digital Denis — Schedule Agent
+Digital Den — Schedule Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Agent for managing schedules: events, tasks, reminders.

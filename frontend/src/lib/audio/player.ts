@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Audio Player Utility
+ * Digital Den — Audio Player Utility
  */
 
 export class StreamAudioPlayer {

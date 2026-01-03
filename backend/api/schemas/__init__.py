@@ -1,1 +1,1 @@
-# Digital Denis - API Schemas
+# Digital Den - API Schemas

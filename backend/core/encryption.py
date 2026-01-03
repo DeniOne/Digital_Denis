@@ -1,5 +1,5 @@
 """
-Digital Denis — Data Encryption
+Digital Den — Data Encryption
 ═══════════════════════════════════════════════════════════════════════════
 
 AES-256 (Fernet) encryption for sensitive data.

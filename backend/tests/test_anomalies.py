@@ -1,5 +1,5 @@
 """
-Digital Denis — Anomaly Detection Unit Tests
+Digital Den — Anomaly Detection Unit Tests
 ═══════════════════════════════════════════════════════════════════════════
 
 Tests for anomalies.py and AnomalyDetector.

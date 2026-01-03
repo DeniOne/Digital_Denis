@@ -1,8 +1,8 @@
 """
-Digital Denis — Telegram Bot
+Digital Den — Telegram Bot
 ═══════════════════════════════════════════════════════════════════════════
 
-Telegram interface for Digital Denis.
+Telegram interface for Digital Den.
 """
 
 import os
@@ -133,7 +133,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await update.message.reply_text(
         f"Привет, {user.first_name}! 👋\n\n"
-        "Я — Digital Denis, твой когнитивный партнёр.\n\n"
+        "Я — Digital Den, твой когнитивный партнёр.\n\n"
         "Можешь писать мне текст или отправлять голосовые сообщения.\n\n"
         "Команды:\n"
         "/start — начать заново\n"
@@ -146,7 +146,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /help command."""
     await update.message.reply_text(
-        "🧠 Digital Denis — Personal Cognitive Operating System\n\n"
+        "🧠 Digital Den — Personal Cognitive Operating System\n\n"
         "Я помогаю структурировать мышление, сохранять решения "
         "и отслеживать когнитивные паттерны.\n\n"
         "Просто напиши мне своё сообщение или отправь голосовое.\n\n"

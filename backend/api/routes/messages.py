@@ -1,5 +1,5 @@
 """
-Digital Denis — Messages API Routes
+Digital Den — Messages API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 API endpoints for message handling.
@@ -49,7 +49,7 @@ async def send_message(
     current_user: User = Depends(get_current_user_optional),
 ):
     """
-    Send message to Digital Denis.
+    Send message to Digital Den.
     
     Returns agent response with metadata.
     """

@@ -1,5 +1,5 @@
 """
-Digital Denis — Operator Agent
+Digital Den — Operator Agent
 ═══════════════════════════════════════════════════════════════════════════
 
 Agent for converting ideas and decisions into actionable plans.
@@ -34,7 +34,7 @@ class OperatorAgent(BaseAgent):
     writes_to_memory = True
     is_synchronous = True
     
-    OPERATOR_SYSTEM_PROMPT = """Ты — операционный модуль системы Digital Denis.
+    OPERATOR_SYSTEM_PROMPT = """Ты — операционный модуль системы Digital Den.
 
 Твоя специализация:
 - Превращение идей в конкретные задачи

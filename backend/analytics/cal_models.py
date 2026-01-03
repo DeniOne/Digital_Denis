@@ -1,5 +1,5 @@
 """
-Digital Denis — CAL Database Models
+Digital Den — CAL Database Models
 ═══════════════════════════════════════════════════════════════════════════
 
 SQLAlchemy models for Cognitive Analytics Layer.

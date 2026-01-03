@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="mt-8 text-center text-xs text-gray-500">
-                Digital Denis Cognitive OS — Модуль персональной аналитики
+                Digital Den Cognitive OS — Модуль персональной аналитики
             </div>
         </div>
     );

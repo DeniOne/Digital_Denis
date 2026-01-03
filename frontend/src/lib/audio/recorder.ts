@@ -1,5 +1,5 @@
 /**
- * Digital Denis — Audio Recorder Utility
+ * Digital Den — Audio Recorder Utility
  */
 
 export interface RecorderOptions {

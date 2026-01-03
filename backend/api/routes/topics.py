@@ -1,5 +1,5 @@
 """
-Digital Denis — Topics API Routes
+Digital Den — Topics API Routes
 ═══════════════════════════════════════════════════════════════════════════
 
 REST API endpoints for topic management and statistics.

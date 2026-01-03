@@ -1,5 +1,5 @@
 """
-Digital Denis — CAL Celery Tasks
+Digital Den — CAL Celery Tasks
 ═══════════════════════════════════════════════════════════════════════════
 
 Async background tasks for Cognitive Analytics Layer.

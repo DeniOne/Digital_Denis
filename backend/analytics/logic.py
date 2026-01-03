@@ -1,5 +1,5 @@
 """
-Digital Denis — Logic Analysis Pipeline
+Digital Den — Logic Analysis Pipeline
 ═══════════════════════════════════════════════════════════════════════════
 
 Decision quality analysis: structure extraction, logic validation, risk assessment.
