@@ -139,7 +139,12 @@ class ProfileLoader:
     """Loads digital profile from YAML file."""
     
     def __init__(self, profile_path: Optional[str] = None):
-        self.profile_path = Path(profile_path or settings.profile_path)
+        # Profile path is relative to project root (parent of backend/)
+        if profile_path:
+            self.profile_path = Path(profile_path)
+        else:
+            project_root = Path(__file__).parent.parent.parent  # backend/../.. = project root
+            self.profile_path = project_root / settings.profile_path
     
     def load(self) -> DigitalProfile:
         """Load profile from YAML."""

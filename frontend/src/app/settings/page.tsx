@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import {
     Bot, Brain, Database, BarChart3, ScrollText,
-    Loader2, Save, ChevronRight, Share2, Calendar
+    Loader2, Save, ChevronRight, Share2, Calendar, Activity
 } from 'lucide-react';
 import { useSettings, useRules, useUpdateSettings } from '@/lib/hooks';
 import BehaviorSettings from '@/components/settings/BehaviorSettings';
@@ -17,8 +17,9 @@ import MemorySettingsSection from '@/components/settings/MemorySettingsSection';
 import AnalyticsSettingsSection from '@/components/settings/AnalyticsSettingsSection';
 import RulesEngine from '@/components/settings/RulesEngine';
 import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
+import KaizenSettingsSection from '@/components/settings/KaizenSettingsSection';
 
-type TabId = 'behavior' | 'autonomy' | 'memory' | 'analytics' | 'rules' | 'integrations';
+type TabId = 'behavior' | 'autonomy' | 'memory' | 'analytics' | 'kaizen' | 'rules' | 'integrations';
 
 interface Tab {
     id: TabId;
@@ -32,6 +33,7 @@ const tabs: Tab[] = [
     { id: 'autonomy', label: 'Автономность', icon: <Brain size={20} />, description: 'Инициатива и разрешённые действия' },
     { id: 'memory', label: 'Память', icon: <Database size={20} />, description: 'Политика хранения и доверие' },
     { id: 'analytics', label: 'Аналитика', icon: <BarChart3 size={20} />, description: 'Типы анализа и уведомления' },
+    { id: 'kaizen', label: 'Kaizen', icon: <Activity size={20} />, description: 'Когнитивная динамика' },
     { id: 'rules', label: 'Правила', icon: <ScrollText size={20} />, description: 'Персональные правила для ИИ' },
     { id: 'integrations', label: 'Интеграции', icon: <Share2 size={20} />, description: 'Google Calendar, Telegram и др.' },
 ];
@@ -76,8 +78,8 @@ export default function SettingsPage() {
                                 <button
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === tab.id
-                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                 >
                                     {tab.icon}
@@ -119,6 +121,9 @@ export default function SettingsPage() {
                             )}
                             {activeTab === 'analytics' && (
                                 <AnalyticsSettingsSection settings={settings.analytics} />
+                            )}
+                            {activeTab === 'kaizen' && (
+                                <KaizenSettingsSection />
                             )}
                             {activeTab === 'rules' && (
                                 <RulesEngine />

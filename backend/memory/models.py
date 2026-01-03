@@ -413,6 +413,19 @@ class UserSettings(Base):
     explain_mode = Column(String(20), default="off")
     
     # ═══════════════════════════════════════════════════════════════════════
+    # Kaizen Engine Settings
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    # Enable Adaptive AI Behavior based on user state
+    kaizen_adaptive_ai_enabled = Column(Boolean, default=True)
+    
+    # Show Kaizen Mirror (reflective observations)
+    kaizen_show_mirror = Column(Boolean, default=True)
+    
+    # Comparison period: week, month, quarter, half_year, year, all_time
+    kaizen_comparison_period = Column(String(20), default="month")
+    
+    # ═══════════════════════════════════════════════════════════════════════
     # Timestamps
     # ═══════════════════════════════════════════════════════════════════════
     

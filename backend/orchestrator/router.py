@@ -15,6 +15,8 @@ from agents.schedule_agent import schedule_agent
 from orchestrator.profile import get_profile
 from orchestrator.user_settings import get_user_settings
 from orchestrator.intent_analyzer import intent_analyzer, IntentAnalysis
+from orchestrator.adaptive_behavior import adaptive_behavior
+from analytics.kaizen_models import UserState
 from memory.short_term import short_term_memory
 from core.logging import get_logger
 
@@ -85,12 +87,46 @@ class RequestRouter:
         if db and user_id:
             user_settings = await get_user_settings(db, user_id)
         
+        # ═══════════════════════════════════════════════════════════════════
+        # Kaizen Engine: Load user state for adaptive behavior
+        # ═══════════════════════════════════════════════════════════════════
+        user_kaizen_state = UserState.PLATEAU  # Default
+        kaizen_contours = None
+        
+        if db and user_id:
+            try:
+                from analytics.kaizen_service import KaizenEngine
+                kaizen_engine = KaizenEngine(db)
+                kaizen_data = await kaizen_engine.get_user_state_for_ai(user_id)
+                user_kaizen_state = UserState(kaizen_data.get("state", "plateau"))
+                kaizen_contours = kaizen_data.get("contours")
+                
+                logger.info(
+                    "kaizen_state_loaded",
+                    user_id=str(user_id),
+                    state=user_kaizen_state.value,
+                )
+            except Exception as e:
+                logger.warning(
+                    "kaizen_state_load_failed",
+                    error=str(e),
+                )
+        
         # Build system prompt with user settings and emotional awareness
         base_prompt = self.profile.get_system_prompt()
         if user_settings:
             full_prompt = base_prompt + user_settings.get_settings_prompt()
         else:
             full_prompt = base_prompt
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # Adaptive AI Behavior: Adapt prompt to user's cognitive state
+        # ═══════════════════════════════════════════════════════════════════
+        full_prompt = adaptive_behavior.adapt_system_prompt(
+            full_prompt,
+            user_kaizen_state,
+            kaizen_contours,
+        )
         
         # Add emotional context to prompt if detected
         full_prompt = self._add_emotional_context(full_prompt, intent)

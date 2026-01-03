@@ -163,6 +163,26 @@ export interface ScheduleListResponse {
   date: string;
 }
 
+// Kaizen Engine Types
+export interface KaizenIndex {
+  kaizen_index: number;
+  change_7d: number;
+  change_14d: number;
+  change_30d: number;
+  user_state: string;
+  state_label: string;
+}
+
+export interface KaizenContour {
+  contour: string;
+  name: string;
+  description: string;
+  score: number;
+  trend: string;
+  change_pct: number;
+  icon: string;
+}
+
 // API Client
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/v1';
 

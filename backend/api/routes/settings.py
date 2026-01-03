@@ -55,12 +55,37 @@ class AnalyticsSettings(BaseModel):
     analytics_aggressiveness: str = Field(default="recommend", description="Aggressiveness: inform, recommend, warn, demand_attention")
 
 
+# --- Kaizen Engine ---
+class KaizenSettings(BaseModel):
+    """Настройки Kaizen Engine."""
+    adaptive_ai_enabled: bool = Field(default=True, description="Включить адаптивное поведение ИИ")
+    show_mirror: bool = Field(default=True, description="Показывать Kaizen-зеркало")
+    comparison_period: str = Field(
+        default="month",
+        description="Период сравнения: week, month, quarter, half_year, year, all_time"
+    )
+    
+    # Маппинг периодов на дни
+    @property
+    def comparison_days(self) -> Optional[int]:
+        mapping = {
+            "week": 7,
+            "month": 30,
+            "quarter": 90,
+            "half_year": 180,
+            "year": 365,
+            "all_time": None,
+        }
+        return mapping.get(self.comparison_period, 30)
+
+
 # --- Full Settings ---
 class UserSettingsSchema(BaseModel):
     behavior: BehaviorSettings = Field(default_factory=BehaviorSettings)
     autonomy: AutonomySettings = Field(default_factory=AutonomySettings)
     memory: MemorySettings = Field(default_factory=MemorySettings)
     analytics: AnalyticsSettings = Field(default_factory=AnalyticsSettings)
+    kaizen: KaizenSettings = Field(default_factory=KaizenSettings)
     
     class Config:
         from_attributes = True
@@ -302,6 +327,62 @@ async def update_analytics_settings(
     await db.refresh(settings)
     
     return {"status": "updated", "analytics": data.model_dump()}
+
+
+@router.get("/kaizen")
+async def get_kaizen_settings(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
+):
+    """Get Kaizen Engine settings."""
+    settings = await get_or_create_settings(db, current_user.id)
+    
+    return {
+        "adaptive_ai_enabled": getattr(settings, 'kaizen_adaptive_ai_enabled', True),
+        "show_mirror": getattr(settings, 'kaizen_show_mirror', True),
+        "comparison_period": getattr(settings, 'kaizen_comparison_period', 'month'),
+        "period_options": [
+            {"value": "week", "label": "Неделя", "days": 7},
+            {"value": "month", "label": "Месяц", "days": 30},
+            {"value": "quarter", "label": "Квартал", "days": 90},
+            {"value": "half_year", "label": "Полгода", "days": 180},
+            {"value": "year", "label": "Год", "days": 365},
+            {"value": "all_time", "label": "Всё время", "days": None},
+        ],
+    }
+
+
+@router.patch("/kaizen")
+async def update_kaizen_settings(
+    data: KaizenSettings,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_optional),
+):
+    """Update Kaizen Engine settings."""
+    valid_periods = ["week", "month", "quarter", "half_year", "year", "all_time"]
+    if data.comparison_period not in valid_periods:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid period. Choose: {', '.join(valid_periods)}"
+        )
+    
+    settings = await get_or_create_settings(db, current_user.id)
+    
+    settings.kaizen_adaptive_ai_enabled = data.adaptive_ai_enabled
+    settings.kaizen_show_mirror = data.show_mirror
+    settings.kaizen_comparison_period = data.comparison_period
+    
+    await db.commit()
+    await db.refresh(settings)
+    
+    return {
+        "status": "updated",
+        "kaizen": {
+            "adaptive_ai_enabled": data.adaptive_ai_enabled,
+            "show_mirror": data.show_mirror,
+            "comparison_period": data.comparison_period,
+        }
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════

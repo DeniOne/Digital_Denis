@@ -24,6 +24,7 @@ from api.routes import analytics
 from api.routes import settings
 from api.routes import schedule
 from api.routes import google_auth
+from api.routes import kaizen
 
 
 # Create main router
@@ -48,6 +49,7 @@ api_router.include_router(schedule.reminders_router, tags=["Reminders"])
 api_router.include_router(tts.router, prefix="/voice", tags=["Voice"])
 api_router.include_router(health.router, prefix="/health", tags=["Health"])
 api_router.include_router(analytics.router, tags=["Analytics"])
+api_router.include_router(kaizen.router, tags=["Kaizen Engine"])
 
 # WebSockets
 from api.websockets import handler as voice_ws
