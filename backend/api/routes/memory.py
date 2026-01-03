@@ -56,15 +56,26 @@ async def list_memories(
     item_type: Optional[str] = Query(None, description="Filter by type"),
     limit: int = Query(20, le=100),
     offset: int = Query(0),
+    telegram_id: Optional[int] = Query(None, description="Filter by Telegram ID (for bot)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_optional),
 ):
     """
     List memory items with optional filters.
     """
+    user_id = current_user.id
+    
+    # If telegram_id is provided, resolve it to user_id (for internal bot calls)
+    if telegram_id:
+        from sqlalchemy import select
+        result = await db.execute(select(User).where(User.telegram_id == telegram_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user_id = user.id
+    
     items = await long_term_memory.list(
         db=db,
-        user_id=current_user.id,
+        user_id=user_id,
         item_type=item_type,
         limit=limit,
         offset=offset,

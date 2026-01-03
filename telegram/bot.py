@@ -178,8 +178,59 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def memory_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /memory command."""
-    await update.message.reply_text("Функция памяти временно обновляется.")
+    """Handle /memory command — show recent memories."""
+    
+    user = update.effective_user
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{BACKEND_URL}/api/v1/memory",
+                params={"telegram_id": user.id, "limit": 10},
+                timeout=30.0,
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                
+                if not items:
+                    await update.message.reply_text(
+                        "🏜️ **Ваша цифровая память пока пуста.**\n\n"
+                        "Продолжайте общаться со мной, и я буду автоматически сохранять "
+                        "важные решения, выводы и факты.",
+                        parse_mode="Markdown"
+                    )
+                    return
+                
+                # Format items
+                text = "📁 **Последние воспоминания**\n\n"
+                for item in items:
+                    m_type = item.get("item_type", "thought")
+                    content = item.get("content", "")
+                    
+                    emoji = {
+                        "decision": "✅ [Решение]",
+                        "insight": "💡 [Инсайт]",
+                        "fact": "📌 [Факт]",
+                        "thought": "💭 [Мысль]"
+                    }.get(m_type, "•")
+                    
+                    # Shorten content for telegram
+                    if len(content) > 150:
+                        content = content[:147] + "..."
+                        
+                    text += f"{emoji}\n_{content}_\n\n"
+                
+                text += f"🔗 [Открыть полный проводник памяти]({BACKEND_URL.replace('8000', '3000')}/memory)"
+                
+                await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
+            else:
+                await update.message.reply_text("Не удалось загрузить воспоминания.")
+                
+        except Exception as e:
+            logger.error(f"Memory load error: {e}")
+            await update.message.reply_text("Произошла ошибка при загрузке памяти.")
 
 
 async def schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
