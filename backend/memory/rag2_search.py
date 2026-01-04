@@ -19,6 +19,7 @@ from memory.ranking_config import (
     INTENT_BASE_WEIGHT
 )
 from llm.openrouter import openrouter
+from core.encryption import encryptor
 
 
 class RAG2SearchService:
@@ -195,12 +196,16 @@ class RAG2SearchService:
         
         results = []
         for row in rows:
+            # Расшифровываем контент перед использованием
+            decrypted_content = encryptor.decrypt(row.content) if row.content else row.content
+            decrypted_summary = encryptor.decrypt(row.summary) if row.summary else row.summary
+            
             item = MemoryItem(
                 id=row.id,
                 user_id=row.user_id,
                 item_type=row.item_type,
-                content=row.content,
-                summary=row.summary,
+                content=decrypted_content,
+                summary=decrypted_summary,
                 structured_data=row.structured_data,
                 source_agent=row.source_agent,
                 confidence=row.confidence,
@@ -239,7 +244,8 @@ class RAG2SearchService:
         
         results = []
         for row in rows:
-            item = MemoryItem(id=row.id, content=row.content, item_type=row.item_type, created_at=row.created_at, usage_count=0, positive_outcomes=0, negative_outcomes=0)
+            decrypted_content = encryptor.decrypt(row.content) if row.content else row.content
+            item = MemoryItem(id=row.id, content=decrypted_content, item_type=row.item_type, created_at=row.created_at, usage_count=0, positive_outcomes=0, negative_outcomes=0)
             results.append((item, float(row.score)))
         
         return results
