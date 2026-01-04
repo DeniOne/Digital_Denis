@@ -118,21 +118,21 @@ class StateExtractor:
         
         # 2. Вызов LLM
         try:
-            response = await openrouter.generate(
-                system_prompt=self.SYSTEM_PROMPT,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": json.dumps(context, ensure_ascii=False, indent=2)
-                    }
-                ],
-                model="anthropic/claude-3.5-sonnet",  # или gpt-4o-mini для скорости
-                temperature=0.2,  # низкая температура для детерминизма
+            from llm.base import LLMMessage
+            messages = [
+                LLMMessage(role="system", content=self.SYSTEM_PROMPT),
+                LLMMessage(role="user", content=json.dumps(context, ensure_ascii=False, indent=2))
+            ]
+            
+            response = await openrouter.complete(
+                messages=messages,
+                model="anthropic/claude-3.5-sonnet",
+                temperature=0.2,
                 max_tokens=1500,
             )
             
             # 3. Парсинг JSON
-            content = response.get("content", "{}")
+            content = response.content
             
             # Попытка извлечь JSON из возможного markdown
             if "```json" in content:

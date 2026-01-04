@@ -75,8 +75,13 @@ async def send_message(
             conversation_id = str(session_id) if session_id else str(user_id)
         else:
             # Anonymous user - use session_id or generate temp UUID
-            from uuid import uuid4
-            user_id = uuid4()  # temporary user ID for anonymous
+            from uuid import UUID
+            try:
+                # Try to parse session_id as UUID if it exists
+                user_id = UUID(session_id) if session_id else UUID("00000000-0000-0000-0000-000000000000")
+            except:
+                from uuid import uuid4
+                user_id = uuid4()
             conversation_id = str(session_id) if session_id else str(user_id)
         
         # Get recent messages from short-term memory
@@ -127,17 +132,18 @@ async def send_message(
         
         # Save to long-term memory if important
         if llm_response.save_to_memory:
-            from memory.service import MemoryService
-            memory_service = MemoryService(db)
+            from memory.long_term import long_term_memory
             
             # Сохранить exchange (user + assistant) как decision/insight
-            await memory_service.create_memory(
+            await long_term_memory.save(
+                db=db,
                 user_id=user_id,
                 item_type=llm_response.memory_type or "insight",
                 content=f"Q: {request.content}\nA: {llm_response.content}",
                 summary=None,
                 confidence=llm_response.confidence,
                 source_agent=llm_response.agent,
+                source_session=UUID(conversation_id) if conversation_id else None
             )
         
         return MessageResponse(
