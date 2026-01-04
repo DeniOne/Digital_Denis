@@ -133,12 +133,12 @@ class SearchService:
             SELECT *, ts_rank_cd(to_tsvector('russian', content), plainto_tsquery('russian', :query)) as score
             FROM memory_items
             WHERE status = 'active'
-              AND (:user_id IS NULL OR user_id = :user_id)
+              AND user_id = cast(:user_id as uuid)
               AND to_tsvector('russian', content) @@ plainto_tsquery('russian', :query)
             ORDER BY score DESC
             LIMIT :limit
         """)
-        result = await db.execute(sql, {"query": query, "user_id": user_id, "limit": limit})
+        result = await db.execute(sql, {"query": query, "user_id": str(user_id) if user_id else None, "limit": limit})
         rows = result.fetchall()
         
         return [(MemoryItem(id=row.id, content=row.content), float(row.score)) for row in rows]
