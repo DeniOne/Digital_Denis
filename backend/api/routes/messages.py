@@ -36,6 +36,7 @@ class MessageResponse(BaseModel):
     session_id: str
     memory_saved: bool = False
     tokens_used: int = 0
+    metadata: Optional[dict] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -117,10 +118,27 @@ async def send_message(
             system_prompt=f"[RAG 2.0 Context Preview]\n{context_preview}\n\n[Full context truncated for performance]",
             memories=[],
             history=formatted_messages,
+            db=db,  # Нужно для schedule_agent
         )
         
-        # Generate LLM response
-        llm_response = await core_agent.process(agent_context)
+        # Выбор агента на основе intent из RAG 2.0
+        detected_intent = rag_result.get("intent", "general")
+        
+        if detected_intent == "schedule":
+            # Напоминания, события, задачи — используем schedule_agent
+            from agents.schedule_agent import schedule_agent
+            llm_response = await schedule_agent.process(agent_context)
+        elif detected_intent == "memory":
+            # Запросы о памяти — используем memory_agent
+            from agents.memory_agent import memory_agent
+            llm_response = await memory_agent.process(agent_context)
+        elif detected_intent == "analysis":
+            # Аналитика — используем analyst_agent
+            from agents.analyst_agent import analyst_agent
+            llm_response = await analyst_agent.process(agent_context)
+        else:
+            # Всё остальное — core_agent
+            llm_response = await core_agent.process(agent_context)
         
         # Save to short-term memory
         await short_term_memory.add_message(
@@ -167,10 +185,11 @@ async def send_message(
         
         return MessageResponse(
             response=llm_response.content,
-            agent="RAG2.0-Core",
+            agent=f"RAG2.0-{llm_response.agent or 'Core'}",
             session_id=str(session_id or conversation_id),
             memory_saved=llm_response.save_to_memory,
             tokens_used=llm_response.tokens_used,
+            metadata=llm_response.memory_data,
         )
         
     except Exception as e:
@@ -332,6 +351,14 @@ async def send_telegram_message(
             # Напоминания, события, задачи — используем schedule_agent
             from agents.schedule_agent import schedule_agent
             llm_response = await schedule_agent.process(agent_context)
+        elif detected_intent == "memory":
+            # Запросы о памяти — используем memory_agent
+            from agents.memory_agent import memory_agent
+            llm_response = await memory_agent.process(agent_context)
+        elif detected_intent == "analysis":
+            # Аналитика — используем analyst_agent
+            from agents.analyst_agent import analyst_agent
+            llm_response = await analyst_agent.process(agent_context)
         else:
             # Всё остальное — core_agent
             llm_response = await core_agent.process(agent_context)
@@ -373,10 +400,11 @@ async def send_telegram_message(
             
         return MessageResponse(
             response=llm_response.content,
-            agent="RAG2.0-CoreAgent",
+            agent=f"RAG2.0-{llm_response.agent or 'Core'}",
             session_id=str(session_id or deterministic_session_uuid),
             memory_saved=llm_response.save_to_memory,
             tokens_used=llm_response.tokens_used,
+            metadata=llm_response.memory_data,
         )
         
     except Exception as e:

@@ -72,13 +72,14 @@ class ScheduleAgent(BaseAgent):
                 )
             
             # Create schedule item based on type
-            result = await self._create_from_intent(intent, context)
+            result, extra_data = await self._create_from_intent(intent, context)
             
             return AgentResponse(
                 content=result,
                 agent=self.name,
                 save_to_memory=True,
                 memory_type="task",
+                memory_data=extra_data
             )
             
         except Exception as e:
@@ -201,7 +202,7 @@ class ScheduleAgent(BaseAgent):
     # Create from Intent
     # ─────────────────────────────────────────────────────────────────────────
     
-    async def _create_from_intent(self, intent: dict, context: AgentContext) -> str:
+    async def _create_from_intent(self, intent: dict, context: AgentContext) -> tuple[str, dict]:
         """Create schedule item from parsed intent."""
         
         item_type = intent.get("item_type", "reminder")
@@ -212,7 +213,7 @@ class ScheduleAgent(BaseAgent):
         user_id = context.user_id if hasattr(context, 'user_id') else None
         
         if not db or not user_id:
-            return "⚠️ Не удалось сохранить: нет подключения к БД."
+            return "⚠️ Не удалось сохранить: нет подключения к БД.", {}
         
         try:
             if item_type == "event":
@@ -237,7 +238,8 @@ class ScheduleAgent(BaseAgent):
                     f"📌 {title}\n"
                     f"📅 {start_at.strftime('%d.%m.%Y')}\n"
                     f"🕐 {start_at.strftime('%H:%M')} — {end_at.strftime('%H:%M') if end_at else f'+{duration} мин'}\n"
-                    f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин"
+                    f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин",
+                    {"item_id": str(item.id), "item_type": "event"}
                 )
             
             elif item_type == "task":
@@ -257,7 +259,8 @@ class ScheduleAgent(BaseAgent):
                     f"✅ **Задача добавлена**\n\n"
                     f"📌 {title}\n"
                     f"⏰ Дедлайн: {due_at.strftime('%d.%m.%Y %H:%M')}\n"
-                    f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин"
+                    f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин",
+                    {"item_id": str(item.id), "item_type": "task"}
                 )
             
             elif item_type == "reminder":
@@ -275,7 +278,8 @@ class ScheduleAgent(BaseAgent):
                 return (
                     f"✅ **Напоминание создано**\n\n"
                     f"📌 {title}\n"
-                    f"🔔 {remind_at.strftime('%d.%m.%Y в %H:%M')}"
+                    f"🔔 {remind_at.strftime('%d.%m.%Y в %H:%M')}",
+                    {"item_id": str(item.id), "item_type": "reminder"}
                 )
             
             elif item_type == "recurring":
@@ -331,14 +335,14 @@ class ScheduleAgent(BaseAgent):
                 if reminder_intent.end_date:
                     response += f"📅 До: {reminder_intent.end_date.strftime('%d.%m.%Y')}\n"
                 
-                return response
+                return response, {"item_id": str(schedule.id), "item_type": "recurring"}
             
             else:
-                return "⚠️ Неизвестный тип записи"
+                return "⚠️ Неизвестный тип записи", {}
                 
         except Exception as e:
             logger.error("create_from_intent_error", error=str(e), intent=intent)
-            return f"⚠️ Ошибка создания: {str(e)}"
+            return f"⚠️ Ошибка создания: {str(e)}", {}
     
     # ─────────────────────────────────────────────────────────────────────────
     # Helpers

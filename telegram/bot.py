@@ -91,8 +91,8 @@ async def transcribe_voice(audio_path: Path) -> str:
 # Backend Communication
 # ═══════════════════════════════════════════════════════════════════════════
 
-async def send_to_backend(user: any, message: str) -> str:
-    """Send message to backend and get response."""
+async def send_to_backend(user: any, message: str) -> dict:
+    """Send message to backend and get response data."""
     
     user_id = user.id
     # Use stable session ID for Telegram by default to prevent context loss on bot restart
@@ -118,18 +118,18 @@ async def send_to_backend(user: any, message: str) -> str:
                 data = response.json()
                 # Update session ID
                 user_sessions[user_id] = data.get("session_id")
-                return data.get("response", "Ошибка: нет ответа")
+                return data
             else:
                 logger.error(f"Backend error: {response.text}")
-                return f"Ошибка сервера: {response.status_code}"
+                return {"response": f"Ошибка сервера: {response.status_code}"}
                 
         except httpx.TimeoutException:
-            return "Превышено время ожидания. Попробуйте позже."
+            return {"response": "Превышено время ожидания. Попробуйте позже."}
         except httpx.ConnectError:
-            return "Не удалось подключиться к серверу."
+            return {"response": "Не удалось подключиться к серверу."}
         except Exception as e:
             logger.error(f"Error: {e}")
-            return f"Ошибка: {str(e)}"
+            return {"response": f"Ошибка: {str(e)}"}
             
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -145,9 +145,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Можешь писать мне текст или отправлять голосовые сообщения.\n\n"
         "Команды:\n"
         "/start — общее приветствие\n"
-        "/reset — начать диалог заново (очистить контекст)\n"
+        "/reset — начать диалог заново\n"
         "/schedule — моё расписание\n"
         "/memory — последние воспоминания\n"
+        "/search <запрос> — поиск в памяти\n"
+        "/settings — мои настройки\n"
         "/help — справка"
     )
 
@@ -169,11 +171,16 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я помогаю структурировать мышление, сохранять решения "
         "и отслеживать когнитивные паттерны.\n\n"
         "Просто напиши мне своё сообщение или отправь голосовое.\n\n"
-        "📅 Расписание:\n"
+        "🔍 **Работа с памятью:**\n"
+        "• `/memory` — последние 10 записей\n"
+        "• `/search <текст>` — поиск по всей памяти\n\n"
+        "📅 **Расписание:**\n"
         "• 'Напомни позвонить маме завтра в 15:00'\n"
         "• 'Поставь встречу с клиентом на понедельник в 10:00'\n"
-        "• 'Принимать таблетки 3 раза в день, 5 дней'\n\n"
-        "Версия: 0.2.0"
+        "• 'Принимать таблетки 3 раза в день, 5 дней'\n"
+        "• `/schedule` — список дел на сегодня\n\n"
+        "⚙️ `/settings` — просмотр текущих настроек поведения ИИ.\n\n"
+        "Версия: 0.2.1"
     )
 
 
@@ -231,6 +238,121 @@ async def memory_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Memory load error: {e}")
             await update.message.reply_text("Произошла ошибка при загрузке памяти.")
+
+
+async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /search command — search in memory."""
+    
+    user = update.effective_user
+    query = " ".join(context.args)
+    
+    if not query:
+        await update.message.reply_text(
+            "🔎 **Поиск по памяти**\n\n"
+            "Использование: `/search <ваш запрос>`\n"
+            "Например: `/search проект Digital Den`",
+            parse_mode="Markdown"
+        )
+        return
+    
+    # Send typing indicator
+    try:
+        await update.message.chat.send_action("typing")
+    except Exception:
+        pass
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{BACKEND_URL}/api/v1/memory/search",
+                json={"query": query, "limit": 5, "telegram_id": user.id},
+                timeout=30.0,
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                
+                if not items:
+                    await update.message.reply_text(
+                        f"🏜️ **Ничего не найдено по запросу: \"{query}\"**\n\n"
+                        "Попробуйте изменить формулировку или проверьте настройки памяти.",
+                        parse_mode="Markdown"
+                    )
+                    return
+                
+                # Format results
+                text = f"🔎 **Результаты поиска: \"{query}\"**\n\n"
+                for item in items:
+                    m_type = item.get("item_type", "thought")
+                    content = item.get("content", "")
+                    relevance = item.get("relevance", 0)
+                    
+                    emoji = {
+                        "decision": "✅ [Решение]",
+                        "insight": "💡 [Инсайт]",
+                        "fact": "📌 [Факт]",
+                        "thought": "💭 [Мысль]"
+                    }.get(m_type, "•")
+                    
+                    # Shorten content for telegram
+                    if len(content) > 200:
+                        content = content[:197] + "..."
+                        
+                    text += f"{emoji}\n_{content}_\n"
+                    if relevance > 0:
+                        text += f"🎯 Релевантность: {int(relevance * 100)}%\n"
+                    text += "\n"
+                
+                await update.message.reply_text(text, parse_mode="Markdown")
+            else:
+                logger.error(f"Search error: {response.text}")
+                await update.message.reply_text("Не удалось выполнить поиск. Попробуйте позже.")
+                
+        except Exception as e:
+            logger.error(f"Search exception: {e}")
+            await update.message.reply_text("Произошла ошибка при поиске.")
+
+
+async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /settings command — show current settings."""
+    user = update.effective_user
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{BACKEND_URL}/api/v1/settings",
+                params={"telegram_id": user.id},
+                timeout=30.0,
+            )
+            
+            if response.status_code == 200:
+                settings = response.json()
+                
+                # Extract sections
+                behavior = settings.get("behavior", {})
+                autonomy = settings.get("autonomy", {})
+                
+                text = "⚙️ **Настройки Digital Den**\n\n"
+                
+                text += "🤖 **Поведение:**\n"
+                text += f"• Роль: `{behavior.get('ai_role', '—')}`\n"
+                text += f"• Глубина: `{behavior.get('thinking_depth', '—')}`\n"
+                text += f"• Стиль: `{behavior.get('response_style', '—')}`\n\n"
+                
+                text += "⚡ **Автономия:**\n"
+                text += f"• Инициатива: `{autonomy.get('initiative_level', '—')}`\n"
+                text += f"• Частота: `{autonomy.get('intervention_frequency', '—')}`\n\n"
+                
+                text += f"🔗 [Настроить всё в веб-интерфейсе]({BACKEND_URL.replace('8000', '3000')}/settings)"
+                
+                await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
+            else:
+                await update.message.reply_text("Не удалось загрузить настройки.")
+                
+        except Exception as e:
+            logger.error(f"Settings load error: {e}")
+            await update.message.reply_text("Произошла ошибка при загрузке настроек.")
 
 
 async def schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -299,10 +421,28 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pass
     
     # Get response from backend
-    response = await send_to_backend(user, update.message.text)
+    data = await send_to_backend(user, update.message.text)
+    response_text = data.get("response", "Ошибка: нет ответа")
+    metadata = data.get("metadata")
+    
+    # Check for schedule confirmation metadata
+    reply_markup = None
+    if metadata and metadata.get("item_id"):
+        item_id = metadata["item_id"]
+        # Standard buttons for schedule items
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Выполнено", callback_data=f"reminder:done:{item_id}"),
+                InlineKeyboardButton("⏰ +15 мин", callback_data=f"reminder:snooze:{item_id}"),
+            ],
+            [
+                InlineKeyboardButton("❌ Пропустить", callback_data=f"reminder:skip:{item_id}")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
     
     # Send response
-    await update.message.reply_text(response)
+    await update.message.reply_text(response_text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -341,10 +481,27 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
         
         # Get response from backend
-        response = await send_to_backend(user, transcription)
+        data = await send_to_backend(user, transcription)
+        response_text = data.get("response", "Ошибка: нет ответа")
+        metadata = data.get("metadata")
         
+        # Check for schedule confirmation metadata
+        reply_markup = None
+        if metadata and metadata.get("item_id"):
+            item_id = metadata["item_id"]
+            keyboard = [
+                [
+                    InlineKeyboardButton("✅ Выполнено", callback_data=f"reminder:done:{item_id}"),
+                    InlineKeyboardButton("⏰ +15 мин", callback_data=f"reminder:snooze:{item_id}"),
+                ],
+                [
+                    InlineKeyboardButton("❌ Пропустить", callback_data=f"reminder:skip:{item_id}")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
         # Send response
-        await update.message.reply_text(response)
+        await update.message.reply_text(response_text, reply_markup=reply_markup, parse_mode="Markdown")
         
     finally:
         # Cleanup
@@ -422,6 +579,8 @@ def main():
     app.add_handler(CommandHandler("reset", reset_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("memory", memory_command))
+    app.add_handler(CommandHandler("search", search_command))
+    app.add_handler(CommandHandler("settings", settings_command))
     app.add_handler(CommandHandler("schedule", schedule_command))
     app.add_handler(CallbackQueryHandler(handle_reminder_callback, pattern="^reminder:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))

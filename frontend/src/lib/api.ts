@@ -290,6 +290,11 @@ export const topicsApi = {
     const { data } = await client.get('/topics/stats/activity');
     return data;
   },
+
+  seed: async () => {
+    const { data } = await client.post('/topics/seed');
+    return data;
+  },
 };
 
 // Graph API
@@ -311,6 +316,11 @@ export const graphApi = {
 
   stats: async () => {
     const { data } = await client.get('/mindmap/stats');
+    return data;
+  },
+
+  addTopicNodes: async (topicIds: string[]) => {
+    const { data } = await client.post('/mindmap/add-topic-nodes', { topic_ids: topicIds });
     return data;
   },
 };
@@ -549,6 +559,26 @@ export const settingsApi = {
     const { data } = await client.patch('/settings/analytics', analytics);
     return data;
   },
+
+  getKaizen: async () => {
+    const { data } = await client.get('/settings/kaizen');
+    return data;
+  },
+
+  updateKaizen: async (settings: Record<string, unknown>) => {
+    const { data } = await client.patch('/settings/kaizen', settings);
+    return data;
+  },
+
+  getExplainMode: async () => {
+    const { data } = await client.get('/settings/explain-mode');
+    return data;
+  },
+
+  updateExplainMode: async (enabled: boolean) => {
+    const { data } = await client.patch('/settings/explain-mode', { enabled });
+    return data;
+  },
 };
 
 // Rules API
@@ -580,6 +610,29 @@ export const rulesApi = {
 
   toggle: async (id: string) => {
     const { data } = await client.patch(`/settings/rules/${id}/toggle`);
+    return data;
+  },
+};
+
+// Kaizen API
+export const kaizenApi = {
+  getIndex: async (): Promise<KaizenIndex> => {
+    const { data } = await client.get('/kaizen/index');
+    return data;
+  },
+
+  getContours: async (): Promise<KaizenContour[]> => {
+    const { data } = await client.get('/kaizen/contours');
+    return data;
+  },
+
+  getDashboard: async () => {
+    const { data } = await client.get('/kaizen/dashboard');
+    return data;
+  },
+
+  calculate: async () => {
+    const { data } = await client.post('/kaizen/calculate');
     return data;
   },
 };
@@ -652,6 +705,7 @@ export const api = {
   settings: settingsApi,
   rules: rulesApi,
   schedule: scheduleApi,
+  kaizen: kaizenApi,
 };
 
 export default client;
