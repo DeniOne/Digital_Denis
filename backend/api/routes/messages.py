@@ -302,12 +302,26 @@ async def send_telegram_message(
         from uuid import uuid5, NAMESPACE_DNS
         deterministic_session_uuid = uuid5(NAMESPACE_DNS, f"telegram_{chat_id}")
         
+        # Системный промпт с информацией о памяти RAG 2.0
+        system_prompt = f"""Ты — Digital Denis, персональный AI-ассистент с ДОЛГОВРЕМЕННОЙ ПАМЯТЬЮ.
+
+ВАЖНО: У тебя ЕСТЬ доступ к долговременной памяти пользователя через систему RAG 2.0.
+Информация ниже — это релевантные воспоминания, извлечённые из базы данных.
+Используй эту информацию в ответах. НЕ ГОВОРИ, что у тебя нет памяти — это неправда.
+
+{context_preview}
+
+Если в контексте выше есть информация о целях, решениях или инсайтах пользователя — 
+активно используй её и ссылайся на неё в ответах.
+"""
+        
         agent_context = AgentContext(
             user_message=request.content,
             user_id=user.id,
             session_id=session_id or deterministic_session_uuid,
-            system_prompt=f"[RAG 2.0 Context Preview]\n{context_preview}\n\n[Full context truncated for performance]",
+            system_prompt=system_prompt,
             memories=[],  # уже в framed_context
+
             history=formatted_messages,
         )
         
