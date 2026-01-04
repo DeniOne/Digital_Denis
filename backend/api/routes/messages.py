@@ -310,7 +310,6 @@ async def send_telegram_message(
         # Save to long-term memory if important
         if llm_response.save_to_memory:
             from memory.long_term import long_term_memory
-            from uuid import UUID
             
             # Safe UUID conversion for source_session
             valid_session_uuid = None
