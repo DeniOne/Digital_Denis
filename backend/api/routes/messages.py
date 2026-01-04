@@ -137,6 +137,7 @@ async def send_message(
         # Save to long-term memory if important
         if llm_response.save_to_memory:
             from memory.long_term import long_term_memory
+            from memory.embeddings import embedding_service
             
             # Safe UUID conversion for source_session
             valid_session_uuid = None
@@ -147,7 +148,7 @@ async def send_message(
                     pass
             
             # Сохранить exchange (user + assistant) как decision/insight
-            await long_term_memory.save(
+            saved_item = await long_term_memory.save(
                 db=db,
                 user_id=user_id,
                 item_type=llm_response.memory_type or "insight",
@@ -157,6 +158,12 @@ async def send_message(
                 source_agent=llm_response.agent,
                 source_session=valid_session_uuid
             )
+            
+            # Создать embeddings для нового элемента (критически важно для поиска!)
+            try:
+                await embedding_service.index_items(db, [saved_item.id])
+            except Exception as emb_err:
+                print(f"⚠️ Embedding indexing failed: {emb_err}")
         
         return MessageResponse(
             response=llm_response.content,
@@ -270,6 +277,14 @@ async def send_telegram_message(
             for msg in recent_messages[-5:]  # последние 5
         ]
         
+        # Load UserSettings for this user (важно для персонализации!)
+        from sqlalchemy import select
+        from memory.models import UserSettings as UserSettingsModel
+        user_settings_result = await db.execute(
+            select(UserSettingsModel).where(UserSettingsModel.user_id == user.id)
+        )
+        user_settings = user_settings_result.scalar_one_or_none()
+        
         # RAG 2.0 Orchestration
         rag_result = await rag2_orchestrator.process_message(
             db=db,
@@ -277,16 +292,20 @@ async def send_telegram_message(
             chat_id=chat_id,
             message=request.content,
             recent_messages=formatted_messages,
-            user_settings=None  # TODO: load from DB if needed
+            user_settings=user_settings  # Теперь передаём настройки!
         )
         
         # Prepare context for core agent (with truncation)
         context_preview = rag_result["framed_context"][:3000]
         
+        # Создаём детерминированный UUID для session на основе telegram_id
+        from uuid import uuid5, NAMESPACE_DNS
+        deterministic_session_uuid = uuid5(NAMESPACE_DNS, f"telegram_{chat_id}")
+        
         agent_context = AgentContext(
             user_message=request.content,
             user_id=user.id,
-            session_id=session_id or chat_id,
+            session_id=session_id or deterministic_session_uuid,
             system_prompt=f"[RAG 2.0 Context Preview]\n{context_preview}\n\n[Full context truncated for performance]",
             memories=[],  # уже в framed_context
             history=formatted_messages,
@@ -310,17 +329,10 @@ async def send_telegram_message(
         # Save to long-term memory if important
         if llm_response.save_to_memory:
             from memory.long_term import long_term_memory
-            
-            # Safe UUID conversion for source_session
-            valid_session_uuid = None
-            if str(session_id or chat_id):
-                try:
-                    valid_session_uuid = UUID(str(session_id or chat_id))
-                except:
-                    pass
+            from memory.embeddings import embedding_service
             
             # Сохранить exchange (user + assistant) как decision/insight
-            await long_term_memory.save(
+            saved_item = await long_term_memory.save(
                 db=db,
                 user_id=user.id,
                 item_type=llm_response.memory_type or "insight",
@@ -328,13 +340,19 @@ async def send_telegram_message(
                 summary=None,
                 confidence=llm_response.confidence,
                 source_agent=llm_response.agent,
-                source_session=valid_session_uuid
+                source_session=deterministic_session_uuid  # Теперь всегда валидный UUID!
             )
+            
+            # Создать embeddings для нового элемента (критически важно для поиска!)
+            try:
+                await embedding_service.index_items(db, [saved_item.id])
+            except Exception as emb_err:
+                print(f"⚠️ Embedding indexing failed: {emb_err}")
             
         return MessageResponse(
             response=llm_response.content,
             agent="RAG2.0-CoreAgent",
-            session_id=str(session_id or chat_id),
+            session_id=str(session_id or deterministic_session_uuid),
             memory_saved=llm_response.save_to_memory,
             tokens_used=llm_response.tokens_used,
         )
