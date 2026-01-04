@@ -133,6 +133,18 @@ class CoreAgent(BaseAgent):
             "ценность", "идеал", "миссия",
         ]
         
+        # Personal/Family facts - ВСЕГДА сохраняем!
+        personal_keywords = [
+            "внук", "внучк", "сын", "дочь", "дочер", "ребенок", "ребёнок", "дети",
+            "жена", "муж", "супруг", "родител", "мама", "папа", "отец", "мать",
+            "брат", "сестр", "бабушк", "дедушк", "семь",
+            "день рождения", "родился", "родилась",
+            "зовут", "имя моего", "имя моей",
+            "мне лет", "моих лет", "я родился", "я родилась",
+            "живу в", "работаю", "моя работа", "моя профессия",
+            "хобби", "увлечени", "люблю делать",
+        ]
+        
         for keyword in decision_keywords:
             if keyword in combined:
                 return True, "decision"
@@ -140,6 +152,10 @@ class CoreAgent(BaseAgent):
         for keyword in insight_keywords:
             if keyword in combined:
                 return True, "insight"
+        
+        for keyword in personal_keywords:
+            if keyword in combined:
+                return True, "fact"  # Сохраняем как факт
         
         return False, None
 

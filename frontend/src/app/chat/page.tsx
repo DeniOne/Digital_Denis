@@ -21,6 +21,29 @@ export default function ChatPage() {
         }
     }, [messages]);
 
+    // Load chat history on mount if sessionId exists
+    useEffect(() => {
+        const loadHistory = async () => {
+            if (!sessionId) return;
+
+            try {
+                const data = await messagesApi.getHistory(sessionId);
+                if (data.messages && data.messages.length > 0) {
+                    setMessages(data.messages.map((msg: any) => ({
+                        role: msg.role,
+                        content: msg.content,
+                        agent: msg.agent || null
+                    })));
+                }
+            } catch (error) {
+                console.error("Failed to load chat history:", error);
+            }
+        };
+
+        loadHistory();
+    }, [sessionId]);
+
+
     const handleTranscript = (text: string, isFinal: boolean) => {
         setLiveTranscript(text);
         if (isFinal) {
