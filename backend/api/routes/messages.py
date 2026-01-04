@@ -252,8 +252,8 @@ async def send_telegram_message(
             session_id = UUID(request.session_id)
         except ValueError:
             pass
-            
-    # 3. Process Message via RAG 2.0
+    
+    # 3. Process Message via RAG 2.0 (with fallback)
     try:
         # RAG 2.0 imports (lazy loading)
         from orchestrator.rag2_orchestrator import rag2_orchestrator
@@ -280,13 +280,14 @@ async def send_telegram_message(
             user_settings=None  # TODO: load from DB if needed
         )
         
-        # Prepare context for core agent
+        # Prepare context for core agent (with truncation)
+        context_preview = rag_result["framed_context"][:3000]
         
         agent_context = AgentContext(
             user_message=request.content,
             user_id=user.id,
             session_id=session_id or chat_id,
-            system_prompt=rag_result["framed_context"],  # RAG 2.0 structured context
+            system_prompt=f"[RAG 2.0 Context Preview]\n{context_preview}\n\n[Full context truncated for performance]",
             memories=[],  # уже в framed_context
             history=formatted_messages,
         )
@@ -306,19 +307,63 @@ async def send_telegram_message(
             content=llm_response.content
         )
         
+        # Save to long-term memory if important
+        if llm_response.save_to_memory:
+            from memory.long_term import long_term_memory
+            from uuid import UUID
+            
+            # Safe UUID conversion for source_session
+            valid_session_uuid = None
+            if str(session_id or chat_id):
+                try:
+                    valid_session_uuid = UUID(str(session_id or chat_id))
+                except:
+                    pass
+            
+            # Сохранить exchange (user + assistant) как decision/insight
+            await long_term_memory.save(
+                db=db,
+                user_id=user.id,
+                item_type=llm_response.memory_type or "insight",
+                content=f"Q: {request.content}\nA: {llm_response.content}",
+                summary=None,
+                confidence=llm_response.confidence,
+                source_agent=llm_response.agent,
+                source_session=valid_session_uuid
+            )
+            
+        return MessageResponse(
+            response=llm_response.content,
+            agent="RAG2.0-CoreAgent",
+            session_id=str(session_id or chat_id),
+            memory_saved=llm_response.save_to_memory,
+            tokens_used=llm_response.tokens_used,
+        )
+        
     except Exception as e:
         import traceback
-        print(f"RAG 2.0 Error: {e}")
+        print(f"⚠️ RAG 2.0 Telegram Error, falling back to classic router: {e}")
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return MessageResponse(
-        response=llm_response.content,
-        agent="RAG2.0-CoreAgent",
-        session_id=str(session_id or chat_id),
-        memory_saved=llm_response.save_to_memory,
-        tokens_used=llm_response.tokens_used,
-    )
+        
+        # Fallback to classic request router
+        try:
+            response = await request_router.route(
+                user_message=request.content,
+                session_id=str(session_id or chat_id),
+                db=db,
+                user_id=user.id,
+            )
+            
+            return MessageResponse(
+                response=response.content,
+                agent=f"{response.agent} (tg-fallback)",
+                session_id=str(response.follow_up) if response.follow_up else str(session_id or chat_id),
+                memory_saved=response.save_to_memory,
+                tokens_used=response.tokens_used,
+            )
+        except Exception as fallback_error:
+            print(f"❌ TG Fallback also failed: {fallback_error}")
+            raise HTTPException(status_code=500, detail=str(fallback_error))
 
 
 @router.get("/session/{session_id}")
