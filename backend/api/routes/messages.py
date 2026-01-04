@@ -125,6 +125,21 @@ async def send_message(
             content=llm_response.content
         )
         
+        # Save to long-term memory if important
+        if llm_response.save_to_memory:
+            from memory.service import MemoryService
+            memory_service = MemoryService(db)
+            
+            # Сохранить exchange (user + assistant) как decision/insight
+            await memory_service.create_memory(
+                user_id=user_id,
+                item_type=llm_response.memory_type or "insight",
+                content=f"Q: {request.content}\nA: {llm_response.content}",
+                summary=None,
+                confidence=llm_response.confidence,
+                source_agent=llm_response.agent,
+            )
+        
         return MessageResponse(
             response=llm_response.content,
             agent="RAG2.0-Core",
