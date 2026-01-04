@@ -321,12 +321,20 @@ async def send_telegram_message(
             session_id=session_id or deterministic_session_uuid,
             system_prompt=system_prompt,
             memories=[],  # уже в framed_context
-
             history=formatted_messages,
+            db=db,  # Нужно для schedule_agent
         )
         
-        # Generate LLM response
-        llm_response = await core_agent.process(agent_context)
+        # Выбор агента на основе intent из RAG 2.0
+        detected_intent = rag_result.get("intent", "general")
+        
+        if detected_intent == "schedule":
+            # Напоминания, события, задачи — используем schedule_agent
+            from agents.schedule_agent import schedule_agent
+            llm_response = await schedule_agent.process(agent_context)
+        else:
+            # Всё остальное — core_agent
+            llm_response = await core_agent.process(agent_context)
         
         # Save to short-term memory
         await short_term_memory.add_message(
