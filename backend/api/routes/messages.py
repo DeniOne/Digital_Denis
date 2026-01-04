@@ -72,16 +72,21 @@ async def send_message(
         # Handle anonymous users (current_user can be None)
         if current_user and current_user.id:
             user_id = current_user.id
+            # Ensure conversation_id is a string, but try to keep it a UUID string if possible
             conversation_id = str(session_id) if session_id else str(user_id)
         else:
-            # Anonymous user - use session_id or generate temp UUID
-            from uuid import UUID
+            # Anonymous user - handle session_id carefully
+            from uuid import UUID, uuid4
             try:
-                # Try to parse session_id as UUID if it exists
-                user_id = UUID(session_id) if session_id else UUID("00000000-0000-0000-0000-000000000000")
+                # If session_id is a valid UUID, use it as user_id for consistency
+                if session_id:
+                    user_id = UUID(session_id)
+                else:
+                    user_id = UUID("00000000-0000-0000-0000-000000000000")
             except:
-                from uuid import uuid4
+                # session_id is not a valid UUID, generate one or use a fixed one
                 user_id = uuid4()
+            
             conversation_id = str(session_id) if session_id else str(user_id)
         
         # Get recent messages from short-term memory
@@ -133,6 +138,15 @@ async def send_message(
         # Save to long-term memory if important
         if llm_response.save_to_memory:
             from memory.long_term import long_term_memory
+            from uuid import UUID
+            
+            # Safe UUID conversion for source_session
+            valid_session_uuid = None
+            if conversation_id:
+                try:
+                    valid_session_uuid = UUID(conversation_id)
+                except:
+                    pass
             
             # Сохранить exchange (user + assistant) как decision/insight
             await long_term_memory.save(
@@ -143,7 +157,7 @@ async def send_message(
                 summary=None,
                 confidence=llm_response.confidence,
                 source_agent=llm_response.agent,
-                source_session=UUID(conversation_id) if conversation_id else None
+                source_session=valid_session_uuid
             )
         
         return MessageResponse(
