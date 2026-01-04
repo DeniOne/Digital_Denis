@@ -208,11 +208,25 @@ def rule_to_response(rule: Rule) -> dict:
 
 @router.get("", response_model=UserSettingsResponse)
 async def get_settings(
+    telegram_id: Optional[int] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_optional),
 ):
     """Get all user settings."""
-    settings = await get_or_create_settings(db, current_user.id)
+    user_id = current_user.id if current_user else None
+    
+    # Resolve telegram_id
+    if telegram_id:
+        from sqlalchemy import select
+        result = await db.execute(select(User).where(User.telegram_id == telegram_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user_id = user.id
+            
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+        
+    settings = await get_or_create_settings(db, user_id)
     return settings_to_response(settings)
 
 

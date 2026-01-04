@@ -45,6 +45,7 @@ class MemoryListResponse(BaseModel):
 class MemorySearchRequest(BaseModel):
     query: str
     limit: int = 10
+    telegram_id: Optional[int] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -133,12 +134,22 @@ async def search_memories(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_optional),
 ):
-    """
-    Search memories by text query.
-    """
+    user_id = current_user.id if current_user else None
+    
+    # Resolve telegram_id
+    if request.telegram_id:
+        from sqlalchemy import select
+        result = await db.execute(select(User).where(User.telegram_id == request.telegram_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user_id = user.id
+            
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+        
     items = await long_term_memory.search(
         db=db,
-        user_id=current_user.id,
+        user_id=user_id,
         query_text=request.query,
         limit=request.limit,
     )

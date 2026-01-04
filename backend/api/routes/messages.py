@@ -16,6 +16,7 @@ from orchestrator.router import router as request_router
 from memory.short_term import short_term_memory
 from core.auth import get_current_user, get_current_user_optional
 from memory.models import User
+from agents.core_agent import core_agent
 
 
 router = APIRouter()
@@ -149,7 +150,8 @@ async def send_message(
         await short_term_memory.add_message(
             session_id=conversation_id,
             role="assistant",
-            content=llm_response.content
+            content=llm_response.content,
+            agent=llm_response.agent
         )
         
         # Save to long-term memory if important
@@ -372,7 +374,8 @@ async def send_telegram_message(
         await short_term_memory.add_message(
             session_id=chat_id,
             role="assistant",
-            content=llm_response.content
+            content=llm_response.content,
+            agent=llm_response.agent
         )
         
         # Save to long-term memory if important

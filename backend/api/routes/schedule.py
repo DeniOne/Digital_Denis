@@ -95,10 +95,24 @@ async def get_user_by_telegram_id(db: AsyncSession, telegram_id: int) -> Optiona
 
 @router.get("/today", response_model=ScheduleListResponse)
 async def get_today_schedule(
+    telegram_id: Optional[int] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_optional),
 ):
     """Get today's schedule items."""
+    user_id = current_user.id if current_user else None
+    
+    # Resolve telegram_id
+    if telegram_id:
+        from sqlalchemy import select
+        result = await db.execute(select(User).where(User.telegram_id == telegram_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user_id = user.id
+            
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+        
     return ScheduleListResponse(
         items=[
             ScheduleItemResponse(
@@ -111,7 +125,7 @@ async def get_today_schedule(
                 due_at=item.due_at,
                 status=item.status.value if item.status else "pending",
             )
-            for item in await schedule_service.get_today_schedule(db, current_user.id)
+            for item in await schedule_service.get_today_schedule(db, user_id)
         ],
         date=date.today().isoformat()
     )
