@@ -2,13 +2,16 @@
 # DIGITAL DENIS — Telegram Bot Dockerfile
 # ═══════════════════════════════════════════════════════════════════════════
 
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (for pydub audio processing)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    gcc \
+    g++ \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
