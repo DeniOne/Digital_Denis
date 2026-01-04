@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from memory.models import MemoryItem, MemoryEmbedding
 from llm.openrouter import openrouter
+from core.encryption import encryptor
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +71,16 @@ class EmbeddingService:
             
         # 2. Prepare texts for embedding
         # We combine content and summary for better semantic representation
+        # ВАЖНО: расшифровываем контент перед созданием embeddings!
         texts = []
         for item in items:
-            text = item.content
-            if item.summary:
-                text += f"\n{item.summary}"
+            # Расшифровываем зашифрованный контент
+            decrypted_content = encryptor.decrypt(item.content) if item.content else item.content
+            decrypted_summary = encryptor.decrypt(item.summary) if item.summary else None
+            
+            text = decrypted_content or ""
+            if decrypted_summary:
+                text += f"\n{decrypted_summary}"
             texts.append(text)
             
         # 3. Generate embeddings
