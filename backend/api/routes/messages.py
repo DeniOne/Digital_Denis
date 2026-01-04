@@ -6,7 +6,7 @@ API endpoints for message handling.
 """
 
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -76,7 +76,6 @@ async def send_message(
             conversation_id = str(session_id) if session_id else str(user_id)
         else:
             # Anonymous user - handle session_id carefully
-            from uuid import UUID, uuid4
             try:
                 # If session_id is a valid UUID, use it as user_id for consistency
                 if session_id:
@@ -138,7 +137,6 @@ async def send_message(
         # Save to long-term memory if important
         if llm_response.save_to_memory:
             from memory.long_term import long_term_memory
-            from uuid import UUID
             
             # Safe UUID conversion for source_session
             valid_session_uuid = None
