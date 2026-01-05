@@ -222,6 +222,7 @@ class ScheduleService:
         await db.flush()
         
         # Create cycle if needed
+        cycle = None  # To hold the cycle object if created
         if intent.cycle:
             cycle = ReminderCycle(
                 schedule_id=schedule.id,
@@ -232,14 +233,13 @@ class ScheduleService:
                 is_in_pause=False,
             )
             db.add(cycle)
-            schedule.cycle = cycle  # Avoid implicit IO in generator
-        else:
-            schedule.cycle = None  # Avoid implicit IO in generator
+            # schedule.cycle = cycle  # Removed: assignment here is tricky with async session flush behavior
         
         await db.flush()
         
         # Generate instances for next 7 days
-        generator = ReminderGenerator(schedule)
+        # Pass cycle explicitly to avoid lazy loading trigger on schedule.cycle
+        generator = ReminderGenerator(schedule, explicit_cycle=cycle)
         instances = generator.generate(days_ahead=7)
         
         for inst in instances:
@@ -426,9 +426,10 @@ class ReminderGenerator:
     Handles cycles (active/pause days) and various schedule types.
     """
     
-    def __init__(self, schedule: ReminderSchedule):
+    def __init__(self, schedule: ReminderSchedule, explicit_cycle: Optional[ReminderCycle] = None):
         self.schedule = schedule
         self.tz = pytz.timezone(schedule.timezone)
+        self.explicit_cycle = explicit_cycle
     
     def generate(self, days_ahead: int = 7) -> List[ReminderInstance]:
         """Generate instances for the next N days."""
@@ -479,7 +480,9 @@ class ReminderGenerator:
     def _is_active_day(self, check_date: date) -> bool:
         """Check if date is an active day (not in pause period)."""
         
-        cycle = self.schedule.cycle
+        # Use explicit cycle if provided (avoids async IO), else try to load from relationship
+        cycle = self.explicit_cycle if self.explicit_cycle is not None else self.schedule.cycle
+        
         if not cycle:
             return True  # No cycle = always active
         
