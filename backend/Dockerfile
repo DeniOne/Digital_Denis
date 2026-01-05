@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g gemini-chat-cli \
+    && npm install -g @google/gemini-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
