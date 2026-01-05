@@ -460,7 +460,7 @@ class KaizenEngine:
         # Count memories by type
         memory_query = (
             select(
-                MemoryItem.memory_type,
+                MemoryItem.item_type,
                 func.count(MemoryItem.id).label("count"),
             )
             .where(
@@ -470,7 +470,7 @@ class KaizenEngine:
                     MemoryItem.created_at <= end_dt,
                 )
             )
-            .group_by(MemoryItem.memory_type)
+            .group_by(MemoryItem.item_type)
         )
         
         result = await self.session.execute(memory_query)
