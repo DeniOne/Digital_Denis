@@ -232,6 +232,9 @@ class ScheduleService:
                 is_in_pause=False,
             )
             db.add(cycle)
+            schedule.cycle = cycle  # Avoid implicit IO in generator
+        else:
+            schedule.cycle = None  # Avoid implicit IO in generator
         
         await db.flush()
         
