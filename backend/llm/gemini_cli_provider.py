@@ -22,35 +22,33 @@ class GeminiCLIProvider:
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or settings.google_api_key
-        self.cli_command = "gemini" # Command installed via npm
+        self.cli_command = "/usr/bin/gemini" 
         
     async def complete(
         self,
         messages: List[LLMMessage],
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        model: str = "gemini-2.0-flash" # Default for CLI
+        model: str = "gemini-2.0-flash" 
     ) -> LLMResponse:
         """
         Generate completion using Gemini CLI.
-        Note: CLI usually doesn't support complex message history in one call 
-        the same way API does, so we format history into one prompt if needed.
         """
-        
-        # Build prompt from messages
         prompt = self._format_messages(messages)
         
         logger.info("gemini_cli_request", prompt_len=len(prompt))
         
         try:
-            # Run CLI via subprocess
-            # gemini "prompt" --api-key=...
+            # Вызов: /usr/bin/gemini "prompt"
+            # Передаем API ключ через переменную окружения для безопасности
+            env = {"GOOGLE_API_KEY": self.api_key, "PATH": "/usr/local/bin:/usr/bin:/bin"}
+            
             process = await asyncio.create_subprocess_exec(
                 self.cli_command,
                 prompt,
-                "--api-key", self.api_key,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
+                env=env
             )
             
             stdout, stderr = await process.communicate()
