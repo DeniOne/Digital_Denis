@@ -9,7 +9,7 @@ Parses user intent and creates schedule items.
 import json
 import re
 from datetime import datetime, date, timedelta
-from typing import Optional
+from typing import Optional, List, Dict
 from uuid import UUID
 
 from agents.base import BaseAgent, AgentContext, AgentResponse
