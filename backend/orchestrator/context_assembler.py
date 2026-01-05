@@ -52,6 +52,11 @@ class ContextAssembler:
         """
         sections = []
         
+        # 0. Time context
+        from datetime import datetime
+        now = datetime.now()
+        sections.append(f"[TIME CONTEXT]\nToday: {now.strftime('%Y-%m-%d')} ({now.strftime('%A')})\nCurrent Time: {now.strftime('%H:%M')}\n")
+
         # 1. System Rules
         if user_settings:
             sections.append(self._format_system_rules(user_settings))
