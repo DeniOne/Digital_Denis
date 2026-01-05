@@ -114,7 +114,7 @@ class LLMSelector:
                 temperature=0.7,
             ),
             ModelRole.GEMINI_CLI: ModelConfig(
-                model_id="gemini-1.5-flash-latest",
+                model_id="gemini-2.0-flash-exp",
                 provider="gemini_cli",
                 cost_per_million=0.1, # Символически
                 max_tokens=4096,

@@ -20,8 +20,8 @@ class GeminiCLIProvider:
     Provider that interacts with 'gemini-chat-cli' installed in the system.
     """
     
-    def __init__(self, api_key: str, model: str = "gemini-1.5-flash-latest"):
-        self.api_key = api_key or settings.google_api_key
+    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-1.5-flash-latest"):
+        self.api_key = api_key # Can be None for OAuth
         self.cli_command = "/usr/bin/gemini" 
         
     async def complete(
@@ -43,10 +43,13 @@ class GeminiCLIProvider:
             # Передаем API ключ через переменную окружения для безопасности
             # ВАЖНО: Gemini CLI использует GEMINI_API_KEY, не GOOGLE_API_KEY
             env = {
-                "GEMINI_API_KEY": self.api_key,
                 "PATH": "/usr/local/bin:/usr/bin:/bin",
                 "HOME": "/tmp"  # Для хранения кеша CLI
             }
+            
+            # Если задан API ключ - используем его, иначе (None) - полагаемся на OAuth токены
+            if self.api_key:
+                env["GEMINI_API_KEY"] = self.api_key
             
             process = await asyncio.create_subprocess_exec(
                 self.cli_command,
@@ -99,4 +102,4 @@ class GeminiCLIProvider:
         return text.strip()
 
 # Global instance
-gemini_cli = GeminiCLIProvider(api_key=settings.google_api_key)
+gemini_cli = GeminiCLIProvider(api_key=None)
