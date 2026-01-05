@@ -19,7 +19,7 @@ from db.database import async_session_maker
 from core.logging import get_logger
 from analytics.kaizen_service import KaizenEngine
 from llm.llm_selector import llm_selector, ModelRole, LLMMessage
-from db.models.user import User
+from memory.models import User
 
 logger = get_logger(__name__)
 
