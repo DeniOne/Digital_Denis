@@ -108,7 +108,7 @@ class EmbeddingService:
                 db.add(new_emb)
             indexed_count += 1
             
-        await db.commit()
+        await db.flush()
         return indexed_count
 
     async def cleanup_orphaned(self, db: AsyncSession) -> int:
@@ -118,7 +118,7 @@ class EmbeddingService:
             ~MemoryEmbedding.memory_id.in_(select(MemoryItem.id))
         )
         result = await db.execute(stmt)
-        await db.commit()
+        await db.flush()
         return result.rowcount
 
 embedding_service = EmbeddingService()

@@ -115,16 +115,7 @@ async def get_today_schedule(
         
     return ScheduleListResponse(
         items=[
-            ScheduleItemResponse(
-                id=str(item.id),
-                item_type=item.item_type.value if item.item_type else "reminder",
-                title=item.title,
-                description=item.description,
-                start_at=item.start_at,
-                end_at=item.end_at,
-                due_at=item.due_at,
-                status=item.status.value if item.status else "pending",
-            )
+            ScheduleItemResponse(**item)
             for item in await schedule_service.get_today_schedule(db, user_id)
         ],
         date=date.today().isoformat()
@@ -146,16 +137,7 @@ async def get_schedule_range(
     
     return ScheduleListResponse(
         items=[
-            ScheduleItemResponse(
-                id=str(item.id),
-                item_type=item.item_type.value if item.item_type else "reminder",
-                title=item.title,
-                description=item.description,
-                start_at=item.start_at,
-                end_at=item.end_at,
-                due_at=item.due_at,
-                status=item.status.value if item.status else "pending",
-            )
+            ScheduleItemResponse(**item)
             for item in items
         ],
         date=f"{date_from.isoformat()} - {date_to.isoformat()}"

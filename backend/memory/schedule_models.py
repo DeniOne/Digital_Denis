@@ -48,6 +48,8 @@ class ScheduleType(enum.Enum):
     SINGLE = "single"            # Одноразовое
     DAILY = "daily"              # Каждый день
     WEEKLY = "weekly"            # По дням недели
+    MONTHLY = "monthly"          # Каждый месяц
+    YEARLY = "yearly"            # Каждый год
     INTERVAL = "interval"        # Каждые N дней
     CUSTOM = "custom"            # Сложное расписание
 

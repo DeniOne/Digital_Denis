@@ -98,7 +98,7 @@ class ConversationStateRepository:
         )
         
         result = await db.execute(stmt)
-        await db.commit()
+        await db.flush()
         
         return result.scalar_one()
     
@@ -119,7 +119,7 @@ class ConversationStateRepository:
             ConversationState.conversation_id == conversation_id
         )
         result = await db.execute(stmt)
-        await db.commit()
+        await db.flush()
         
         return result.rowcount > 0
     

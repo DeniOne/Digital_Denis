@@ -270,7 +270,7 @@ async def send_telegram_message(
             role="owner"  # Default role
         )
         db.add(user)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
     
     # 2. Parse Session
@@ -401,6 +401,9 @@ async def send_telegram_message(
             except Exception as emb_err:
                 print(f"⚠️ Embedding indexing failed: {emb_err}")
             
+        # Final commit for all changes (user, state, items, memories, embeddings)
+        await db.commit()
+        
         return MessageResponse(
             response=llm_response.content,
             agent=f"RAG2.0-{llm_response.agent or 'Core'}",
@@ -423,6 +426,9 @@ async def send_telegram_message(
                 db=db,
                 user_id=user.id,
             )
+            
+            # Commit any changes from fallback (or previous steps)
+            await db.commit()
             
             return MessageResponse(
                 response=response.content,

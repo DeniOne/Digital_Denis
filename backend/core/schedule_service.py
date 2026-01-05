@@ -120,7 +120,7 @@ class ScheduleService:
         )
         
         db.add(item)
-        await db.commit()
+        await db.flush()
         await db.refresh(item)
         
         logger.info("event_created", item_id=str(item.id), title=title)
@@ -154,7 +154,7 @@ class ScheduleService:
         )
         
         db.add(item)
-        await db.commit()
+        await db.flush()
         await db.refresh(item)
         
         logger.info("task_created", item_id=str(item.id), title=title)
@@ -187,7 +187,7 @@ class ScheduleService:
         )
         
         db.add(item)
-        await db.commit()
+        await db.flush()
         await db.refresh(item)
         
         logger.info("reminder_created", item_id=str(item.id), title=title)
@@ -236,15 +236,26 @@ class ScheduleService:
         
         await db.flush()
         
-        # Generate instances for next 7 days
-        # IMPORTANT: Always pass explicit_cycle (even if None) to avoid touching schedule.cycle relationship
-        generator = ReminderGenerator(schedule, explicit_cycle=cycle)
-        instances = generator.generate(days_ahead=7)
+        # Generate instances for next 7 days using GeneratorConfig (ORM-agnostic)
+        config = GeneratorConfig(
+            schedule_id=schedule.id,
+            start_date=schedule.start_date,
+            end_date=schedule.end_date,
+            schedule_type=schedule.schedule_type,
+            times_of_day=schedule.times_of_day,
+            days_of_week=schedule.days_of_week,
+            interval_days=schedule.interval_days,
+            timezone=schedule.timezone,
+            cycle=cycle,
+        )
+        
+        generator = ReminderGenerator(config)
+        instances = generator.generate(days_ahead=365)
         
         for inst in instances:
             db.add(inst)
         
-        await db.commit()
+        await db.flush()
         await db.refresh(schedule)
         
         logger.info(
@@ -267,9 +278,10 @@ class ScheduleService:
         date_from: date,
         date_to: date,
         include_completed: bool = False,
-    ) -> List[ScheduleItem]:
-        """Get schedule items for date range."""
+    ) -> List[dict]:
+        """Get schedule items and reminder instances for date range."""
         
+        # 1. Fetch ScheduleItems
         conditions = [
             ScheduleItem.user_id == user_id,
             or_(
@@ -286,8 +298,73 @@ class ScheduleService:
             .where(and_(*conditions))
             .order_by(ScheduleItem.start_at, ScheduleItem.due_at)
         )
+        items = result.scalars().all()
         
-        return result.scalars().all()
+        # 2. Fetch ReminderInstances in range
+        # Convert dates to datetimes for comparison with remind_at which is DateTime(timezone=True)
+        # Assuming UTC or system local for simple date range
+        dt_from = datetime.combine(date_from, datetime.min.time()).replace(tzinfo=pytz.UTC)
+        dt_to = datetime.combine(date_to, datetime.max.time()).replace(tzinfo=pytz.UTC)
+        
+        inst_query = (
+            select(ReminderInstance)
+            .join(ReminderSchedule)
+            .where(
+                ReminderSchedule.user_id == user_id,
+                ReminderInstance.remind_at >= dt_from,
+                ReminderInstance.remind_at <= dt_to
+            )
+            .options(selectinload(ReminderInstance.schedule))
+        )
+        
+        if not include_completed:
+            inst_query = inst_query.where(ReminderInstance.status == ReminderStatus.PENDING)
+            
+        inst_result = await db.execute(inst_query)
+        instances = inst_result.scalars().all()
+        
+        # 3. Merge and unify
+        unified = []
+        
+        for item in items:
+            unified.append({
+                "id": str(item.id),
+                "item_type": item.item_type.value if item.item_type else "reminder",
+                "title": item.title,
+                "description": item.description,
+                "start_at": item.start_at,
+                "end_at": item.end_at,
+                "due_at": item.due_at,
+                "status": item.status.value if item.status else "pending",
+                "category": item.category,
+            })
+            
+        for inst in instances:
+            # Map ReminderStatus to ItemStatus for frontend
+            status_map = {
+                ReminderStatus.PENDING: ItemStatus.PENDING.value,
+                ReminderStatus.SENT: ItemStatus.PENDING.value,
+                ReminderStatus.CONFIRMED: ItemStatus.COMPLETED.value,
+                ReminderStatus.MISSED: ItemStatus.MISSED.value,
+                ReminderStatus.SNOOZED: ItemStatus.PENDING.value,
+            }
+            
+            unified.append({
+                "id": str(inst.id),
+                "item_type": ItemType.RECURRING.value,
+                "title": inst.schedule.title,
+                "description": inst.schedule.description,
+                "start_at": inst.remind_at,
+                "end_at": None,
+                "due_at": None,
+                "status": status_map.get(inst.status, ItemStatus.PENDING.value),
+                "category": inst.schedule.category,
+            })
+            
+        # Sort by start_at
+        unified.sort(key=lambda x: x["start_at"] or datetime.max.replace(tzinfo=pytz.UTC))
+        
+        return unified
     
     async def get_today_schedule(
         self,
@@ -340,7 +417,7 @@ class ScheduleService:
         if item:
             item.status = ItemStatus.COMPLETED
             item.completed_at = datetime.now(pytz.UTC)
-            await db.commit()
+            await db.flush()
             logger.info("item_completed", item_id=str(item_id))
         
         return item
@@ -363,7 +440,7 @@ class ScheduleService:
         
         if item:
             item.status = ItemStatus.MISSED
-            await db.commit()
+            await db.flush()
             logger.info("item_skipped", item_id=str(item_id))
         
         return item
@@ -386,7 +463,7 @@ class ScheduleService:
         
         if item:
             item.status = ItemStatus.CANCELLED
-            await db.commit()
+            await db.flush()
             logger.info("item_cancelled", item_id=str(item_id))
         
         return item
@@ -409,7 +486,7 @@ class ScheduleService:
         
         if schedule:
             schedule.is_active = False
-            await db.commit()
+            await db.flush()
             logger.info("schedule_paused", schedule_id=str(schedule_id))
         
         return schedule
@@ -419,18 +496,29 @@ class ScheduleService:
 # Reminder Generator
 # ═══════════════════════════════════════════════════════════════════════════
 
+@dataclass
+class GeneratorConfig:
+    """Configuration for ReminderGenerator, decoupled from ORM."""
+    schedule_id: UUID
+    start_date: date
+    end_date: Optional[date]
+    schedule_type: ScheduleType
+    times_of_day: List[str]
+    days_of_week: Optional[List[int]]
+    interval_days: Optional[int]
+    timezone: str
+    cycle: Optional[ReminderCycle] = None
+
+
 class ReminderGenerator:
     """
-    Generates ReminderInstance objects from ReminderSchedule.
+    Generates ReminderInstance objects from GeneratorConfig.
     Handles cycles (active/pause days) and various schedule types.
     """
     
-    def __init__(self, schedule: ReminderSchedule, explicit_cycle: Optional[ReminderCycle] = None):
-        self.schedule = schedule
-        self.tz = pytz.timezone(schedule.timezone)
-        self.explicit_cycle = explicit_cycle
-        # We store whether we HAVE a cycle to avoid accessing the relationship schedule.cycle later
-        self.has_cycle = explicit_cycle is not None
+    def __init__(self, config: GeneratorConfig):
+        self.config = config
+        self.tz = pytz.timezone(config.timezone)
     
     def generate(self, days_ahead: int = 7) -> List[ReminderInstance]:
         """Generate instances for the next N days."""
@@ -442,9 +530,9 @@ class ReminderGenerator:
             current_date = today + timedelta(days=day_offset)
             
             # Check date bounds
-            if current_date < self.schedule.start_date:
+            if current_date < self.config.start_date:
                 continue
-            if self.schedule.end_date and current_date > self.schedule.end_date:
+            if self.config.end_date and current_date > self.config.end_date:
                 break
             
             # Check if day is active (considering cycles)
@@ -452,18 +540,28 @@ class ReminderGenerator:
                 continue
             
             # Check day of week for weekly schedules
-            if self.schedule.schedule_type == ScheduleType.WEEKLY:
-                if current_date.isoweekday() not in (self.schedule.days_of_week or []):
+            if self.config.schedule_type == ScheduleType.WEEKLY:
+                if current_date.isoweekday() not in (self.config.days_of_week or []):
+                    continue
+            
+            # Check monthly (same day of month)
+            if self.config.schedule_type == ScheduleType.MONTHLY:
+                if current_date.day != self.config.start_date.day:
+                    continue
+            
+            # Check yearly (same month and day)
+            if self.config.schedule_type == ScheduleType.YEARLY:
+                if current_date.month != self.config.start_date.month or current_date.day != self.config.start_date.day:
                     continue
             
             # Check interval for interval schedules
-            if self.schedule.schedule_type == ScheduleType.INTERVAL:
-                days_since_start = (current_date - self.schedule.start_date).days
-                if self.schedule.interval_days and days_since_start % self.schedule.interval_days != 0:
+            if self.config.schedule_type == ScheduleType.INTERVAL:
+                days_since_start = (current_date - self.config.start_date).days
+                if self.config.interval_days and days_since_start % self.config.interval_days != 0:
                     continue
             
             # Generate instances for each time of day
-            for time_str in (self.schedule.times_of_day or []):
+            for time_str in (self.config.times_of_day or []):
                 remind_at = self._combine_date_time(current_date, time_str)
                 
                 # Skip past times
@@ -471,7 +569,7 @@ class ReminderGenerator:
                     continue
                 
                 instances.append(ReminderInstance(
-                    schedule_id=self.schedule.id,
+                    schedule_id=self.config.schedule_id,
                     remind_at=remind_at,
                     status=ReminderStatus.PENDING,
                 ))
@@ -481,12 +579,9 @@ class ReminderGenerator:
     def _is_active_day(self, check_date: date) -> bool:
         """Check if date is an active day (not in pause period)."""
         
-        if not self.has_cycle:
-            return True  # No cycle = always active
-            
-        cycle = self.explicit_cycle
+        cycle = self.config.cycle
         if not cycle:
-            return True # Should not happen if has_cycle is True
+            return True  # No cycle = always active
         
         # Calculate position in cycle
         days_since_start = (check_date - cycle.cycle_start_date).days

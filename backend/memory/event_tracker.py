@@ -49,7 +49,7 @@ class MemoryEventTracker:
             )
             db.add(event)
         
-        await db.commit()
+        await db.flush()
     
     async def increment_usage_count(
         self,
@@ -70,7 +70,7 @@ class MemoryEventTracker:
         )
         
         await db.execute(stmt)
-        await db.commit()
+        await db.flush()
     
     async def record_outcome(
         self,
@@ -103,7 +103,7 @@ class MemoryEventTracker:
         )
         
         await db.execute(stmt)
-        await db.commit()
+        await db.flush()
 
 
 # Global instance

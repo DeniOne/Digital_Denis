@@ -49,7 +49,7 @@ class LongTermMemory:
             confidence=confidence,
         )
         db.add(item)
-        await db.commit()
+        await db.flush()
         await db.refresh(item)
         return item
     
@@ -123,7 +123,7 @@ class LongTermMemory:
         item = await self.get(db, item_id)
         if item:
             item.status = "archived"
-            await db.commit()
+            await db.flush()
             return True
         return False
     
@@ -132,7 +132,7 @@ class LongTermMemory:
         item = await self.get(db, item_id)
         if item:
             item.status = "deleted"
-            await db.commit()
+            await db.flush()
             return True
         return False
     

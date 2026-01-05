@@ -133,7 +133,7 @@ class ScheduleAgent(BaseAgent):
     "due_at": "2025-01-05T18:00:00",
     
     // Для recurring:
-    "schedule_type": "daily|weekly|interval",
+    "schedule_type": "daily|weekly|monthly|yearly|interval",
     "times_of_day": ["08:00", "14:00", "20:00"],
     "days_of_week": [1, 2, 3, 4, 5],
     "start_date": "2025-01-01",
@@ -160,7 +160,9 @@ class ScheduleAgent(BaseAgent):
 4. Если не указана длительность встречи — по умолчанию 1 час
 5. "Каждый день" → schedule_type: "daily"
 6. "По будням" → days_of_week: [1,2,3,4,5]
-7. "5 дней приём, 30 перерыв" → cycle
+7. "Каждый год", "день рождения", "ежегодно" → schedule_type: "yearly"
+8. "Каждый месяц" → schedule_type: "monthly"
+9. "5 дней приём, 30 перерыв" → cycle
 
 Верни ТОЛЬКО JSON, без объяснений:"""
 
@@ -295,6 +297,10 @@ class ScheduleAgent(BaseAgent):
                 schedule_type = ScheduleType.DAILY
                 if intent.get("schedule_type") == "weekly":
                     schedule_type = ScheduleType.WEEKLY
+                elif intent.get("schedule_type") == "monthly":
+                    schedule_type = ScheduleType.MONTHLY
+                elif intent.get("schedule_type") == "yearly":
+                    schedule_type = ScheduleType.YEARLY
                 elif intent.get("schedule_type") == "interval":
                     schedule_type = ScheduleType.INTERVAL
                 
