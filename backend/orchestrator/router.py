@@ -19,6 +19,7 @@ from orchestrator.adaptive_behavior import adaptive_behavior
 from analytics.kaizen_models import UserState
 from memory.short_term import short_term_memory
 from core.logging import get_logger
+from llm.model_router import model_router, TaskCategory
 
 logger = get_logger(__name__)
 
@@ -66,6 +67,18 @@ class RequestRouter:
         """
         # Generate session ID if not provided
         session_id = session_id or uuid4()
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # Hybrid AI: Classify task for optimal model selection
+        # ═══════════════════════════════════════════════════════════════════
+        task_category, model_role, model_confidence = await model_router.classify(user_message)
+        
+        logger.info(
+            "model_selected",
+            task_category=task_category.value,
+            model_role=model_role.value,
+            model_confidence=model_confidence,
+        )
         
         # Analyze intent (extended analysis)
         intent = await intent_analyzer.analyze(user_message)
@@ -138,7 +151,7 @@ class RequestRouter:
         # Add emotional context to prompt if detected
         full_prompt = self._add_emotional_context(full_prompt, intent)
         
-        # Build context with intent analysis
+        # Build context with intent analysis and model role
         context = AgentContext(
             session_id=session_id,
             user_message=user_message,
@@ -146,6 +159,7 @@ class RequestRouter:
             memories=memories,
             system_prompt=full_prompt,
             request_type=intent.category.value,
+            model_role=model_role.value,  # Hybrid AI: pass selected model role
             user_settings=user_settings,
             db=db,
             user_id=user_id,
@@ -158,6 +172,11 @@ class RequestRouter:
                     "action_type": intent.action_type.value,
                     "requires_clarification": intent.requires_clarification,
                     "topics": intent.topics,
+                },
+                "model": {
+                    "task_category": task_category.value,
+                    "role": model_role.value,
+                    "confidence": model_confidence,
                 }
             }
         )
@@ -180,6 +199,7 @@ class RequestRouter:
             emotional_state=intent.emotional_state.value,
             urgency=intent.urgency,
             agent=agent.name,
+            model_role=model_role.value,  # Hybrid AI
             session_id=str(session_id),
         )
         

@@ -27,11 +27,33 @@ class Settings(BaseSettings):
     openrouter_api_key: Optional[str] = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     
-    # Default model for main tasks
-    default_model: str = "anthropic/claude-3.5-sonnet"
+    # ─────────────────────────────────────────────────────────────────────────
+    # Hybrid AI Architecture — Model Roles
+    # ─────────────────────────────────────────────────────────────────────────
+    
+    # Router/Classifier model (cheap, fast) — диспетчер запросов
+    router_model: str = "openai/gpt-4o-mini"
+    
+    # Default model for main tasks — основная модель
+    default_model: str = "anthropic/claude-sonnet-4.5"
+    
+    # Fast/Routine model — рутинные задачи (80% запросов)
+    fast_model: str = "openai/gpt-4o-mini"
+    
+    # Thinking/Reasoning models — глубокий анализ, философия
+    thinking_model: str = "deepseek/deepseek-r1"
+    thinking_fallback_model: str = "anthropic/claude-opus-4.5"  # Claude Opus 4.5
+    
+    # Creative models — творческие задачи
+    creative_text_model: str = "openai/gpt-4o"  # Книги, сторителлинг
+    creative_multimodal_model: str = "google/gemini-3-flash-preview"  # Gemini 3 Flash
+    
+    # Reasoning model (Gemini for deep analysis)
+    google_api_key: Optional[str] = None
+    reasoning_model: str = "gemini-1.5-pro"
     
     # Cheap model for classification, topic extraction
-    cheap_model: str = "meta-llama/llama-3.1-70b-instruct"
+    cheap_model: str = "openai/gpt-4o-mini"
     
     # Groq for cheap tasks and voice
     groq_api_key: Optional[str] = None

@@ -67,15 +67,32 @@ class CoreAgent(BaseAgent):
             content=user_msg_with_guard
         ))
         
-        # Call LLM
-        from llm.groq import groq
-        import logging
+        # ═══════════════════════════════════════════════════════════════════
+        # Hybrid AI: Use LLM Selector for automatic model selection
+        # ═══════════════════════════════════════════════════════════════════
+        from llm.llm_selector import llm_selector, ModelRole
+        
+        # Determine model role from context
+        model_role_str = context.model_role or "default"
+        try:
+            model_role = ModelRole(model_role_str)
+        except ValueError:
+            model_role = ModelRole.DEFAULT
+        
+        # Fallback chain: THINKING -> DEFAULT -> FAST
+        fallback_role = ModelRole.DEFAULT if model_role == ModelRole.THINKING else ModelRole.FAST
         
         try:
-            response = await openrouter.complete(messages)
+            response = await llm_selector.complete(
+                role=model_role,
+                messages=messages,
+                fallback_role=fallback_role,
+            )
         except Exception as e:
-            # Fallback to Groq if OpenRouter fails (e.g. 401 Unauthorized)
-            logging.warning(f"OpenRouter failed, falling back to Groq: {e}")
+            # Ultimate fallback to Groq if everything fails
+            import logging
+            from llm.groq import groq
+            logging.warning(f"LLM Selector failed, falling back to Groq: {e}")
             response = await groq.complete(messages)
         
         # Check if response contains a decision

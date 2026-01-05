@@ -30,6 +30,9 @@ class AgentContext:
     # Request classification
     request_type: Optional[str] = None  # strategic, analytical, operational, reflexive, meta
     
+    # Model role for hybrid AI architecture
+    model_role: Optional[str] = None  # router, fast, thinking, creative_text, etc.
+    
     # User settings (AI behavior, rules, etc.)
     user_settings: Optional[Any] = None  # UserSettingsContext
     
