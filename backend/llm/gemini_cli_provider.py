@@ -41,7 +41,12 @@ class GeminiCLIProvider:
         try:
             # Вызов: /usr/bin/gemini "prompt"
             # Передаем API ключ через переменную окружения для безопасности
-            env = {"GOOGLE_API_KEY": self.api_key, "PATH": "/usr/local/bin:/usr/bin:/bin"}
+            # ВАЖНО: Gemini CLI использует GEMINI_API_KEY, не GOOGLE_API_KEY
+            env = {
+                "GEMINI_API_KEY": self.api_key,
+                "PATH": "/usr/local/bin:/usr/bin:/bin",
+                "HOME": "/tmp"  # Для хранения кеша CLI
+            }
             
             process = await asyncio.create_subprocess_exec(
                 self.cli_command,
