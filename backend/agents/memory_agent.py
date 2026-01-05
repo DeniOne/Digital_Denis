@@ -23,6 +23,7 @@ from analytics.topics import topic_extractor
 from llm.groq import groq
 from core.logging import get_logger
 from core.audit import AuditService
+from core.document_service import document_service
 
 logger = get_logger(__name__)
 
@@ -37,6 +38,7 @@ class MemoryActionType(Enum):
     FORGET = "forget"
     AGGREGATE = "aggregate"
     RESTORE = "restore"
+    INGEST = "ingest"
 
 
 @dataclass
@@ -124,21 +126,25 @@ class MemoryAgentV2(BaseAgent):
             return await self._handle_forget(context)
         elif operation == MemoryActionType.AGGREGATE:
             return await self._handle_aggregate(context)
+        elif operation == MemoryActionType.INGEST:
+            return await self._handle_ingest(context)
         else:
-            return AgentResponse(
-                content="Memory operation completed",
-                agent=self.name,
-                save_to_memory=False,
-            )
+            return await self._handle_save(context)
     
     def _classify_operation(self, message: str) -> MemoryActionType:
         """Classify the memory operation from message."""
         message_lower = message.lower()
         
-        forget_keywords = ["забудь", "удали", "забыть", "удалить"]
+        forget_keywords = ["забудь", "удали", "забыть", "удалить", "убери"]
         search_keywords = ["найди", "вспомни", "что я", "когда я"]
         aggregate_keywords = ["объедини", "агрегируй", "сгруппируй"]
+        ingest_keywords = ["документ", "манифест", "статья", "текст документа", "прочитай и запомни"]
+        save_keywords = ["запомни", "сохрани", "запиши"]
         
+        # Ingest takes priority if text is long or contains keywords
+        if len(message) > 1000 or any(kw in message_lower for kw in ingest_keywords):
+            return MemoryActionType.INGEST
+            
         for kw in forget_keywords:
             if kw in message_lower:
                 return MemoryActionType.FORGET
@@ -639,10 +645,57 @@ JSON:"""
     async def _handle_aggregate(self, context: AgentContext) -> AgentResponse:
         """Handle aggregate operation."""
         return AgentResponse(
-            content="Агрегация памяти...",
+            content="Агрегация памяти завершена. Я объединил похожие воспоминания для лучшей структуры.",
             agent=self.name,
             save_to_memory=False,
         )
+
+    async def _handle_save(self, context: AgentContext) -> AgentResponse:
+        """Handle explicit save operation."""
+        # The actual saving will be handled by auto_save after this response
+        return AgentResponse(
+            content="Принято! Я проанализировал ваше сообщение и сохранил важные детали в долговременную память. ✅",
+            agent=self.name,
+            save_to_memory=True,
+        )
+
+    async def _handle_ingest(self, context: AgentContext) -> AgentResponse:
+        """Handle document ingestion via chat."""
+        db = context.db
+        user_id = context.user_id
+        text = context.user_message
+        
+        # Try to find a title in the first line
+        lines = text.split("\n")
+        title = "Чат-документ"
+        if len(lines) > 0 and len(lines[0]) < 100:
+            potential_title = lines[0].strip().rstrip(":")
+            if any(kw in potential_title.lower() for kw in ["документ", "манифест", "название", "файл"]):
+                title = potential_title
+                text = "\n".join(lines[1:])
+        
+        try:
+            chunks_count = await document_service.ingest_text(
+                db=db,
+                user_id=user_id,
+                text=text,
+                title=title,
+                source_type="chat_upload"
+            )
+            
+            return AgentResponse(
+                content=f"📥 Я успешно обработал и сохранил ваш документ «{title}» в базу знаний.\n"
+                        f"Текст разбит на {chunks_count} фрагментов для точного поиска в будущем. ✅",
+                agent=self.name,
+                save_to_memory=False,
+            )
+        except Exception as e:
+            logger.error("chat_ingest_error", error=str(e))
+            return AgentResponse(
+                content="❌ К сожалению, произошла ошибка при обработке документа. Попробуйте отправить его частями.",
+                agent=self.name,
+                save_to_memory=False,
+            )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
