@@ -10,4 +10,5 @@ Hybrid AI Architecture:
 Usage:
     from llm.llm_selector import llm_selector, ModelRole
     from llm.model_router import model_router, TaskCategory
+    from llm.gemini_cli_provider import gemini_cli
 """

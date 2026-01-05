@@ -34,6 +34,7 @@ class ModelRole(str, Enum):
     CREATIVE_MEDIA = "creative_media"  # Изображения, мультимодал
     DEFAULT = "default"         # Основные задачи
     FALLBACK = "fallback"       # Критические задачи
+    GEMINI_CLI = "gemini_cli"       # Прямой вызов через CLI для глубоких сессий
 
 
 @dataclass
@@ -106,9 +107,16 @@ class LLMSelector:
                 temperature=0.7,
             ),
             ModelRole.FALLBACK: ModelConfig(
-                model_id=settings.thinking_fallback_model,
+                model_id=settings.thinking_fallback_model, # Claude Opus 4.5
                 provider="openrouter",
-                cost_per_million=10.00,  # Claude Opus 4.5
+                cost_per_million=10.0,
+                max_tokens=4096,
+                temperature=0.7,
+            ),
+            ModelRole.GEMINI_CLI: ModelConfig(
+                model_id="gemini-2.0-flash",
+                provider="gemini_cli",
+                cost_per_million=0.1, # Символически
                 max_tokens=4096,
                 temperature=0.7,
             ),
@@ -188,6 +196,14 @@ class LLMSelector:
                         temperature=temp,
                         max_tokens=tokens,
                     )
+            elif config.provider == "gemini_cli":
+                from llm.gemini_cli_provider import gemini_cli
+                response = await gemini_cli.complete(
+                    messages=messages,
+                    temperature=temp,
+                    max_tokens=tokens,
+                    model=config.model_id
+                )
             elif config.provider == "groq":
                 response = await groq.complete(
                     messages=messages,

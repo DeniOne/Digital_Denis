@@ -62,6 +62,10 @@ class ModelRouter:
         "да", "нет", "ладно", "окей",
     ]
     
+    GEMINI_CLI_KEYWORDS = [
+        "кли", "cli", "кли,", "cli,"
+    ]
+    
     THINKING_KEYWORDS = [
         "философ", "смысл жизни", "почему я", "кто я", "зачем",
         "проанализируй", "подумай", "размышлени", "глубоко",
@@ -124,6 +128,9 @@ class ModelRouter:
         """Быстрая классификация по ключевым словам."""
         
         # Проверяем в порядке приоритета
+        if message_lower.startswith(tuple(self.GEMINI_CLI_KEYWORDS)):
+            return (TaskCategory.THINKING, ModelRole.GEMINI_CLI, 1.0)
+            
         if any(kw in message_lower for kw in self.SCHEDULE_KEYWORDS):
             return (TaskCategory.SCHEDULE, ModelRole.FAST, 0.9)
         
