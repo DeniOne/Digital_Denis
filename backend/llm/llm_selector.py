@@ -144,7 +144,6 @@ class LLMSelector:
             LLMResponse с ответом
         """
         from llm.openrouter import openrouter
-        from llm.gemini import gemini
         from llm.groq import groq
         
         config = self.get_model_config(role)
@@ -162,7 +161,7 @@ class LLMSelector:
         )
         
         try:
-            # Выбор провайдера
+            # Выбор провайдера — все модели идут через OpenRouter
             if config.provider == "openrouter":
                 response = await openrouter.complete(
                     messages=messages,
@@ -171,12 +170,24 @@ class LLMSelector:
                     max_tokens=tokens,
                 )
             elif config.provider == "gemini":
-                response = await gemini.complete(
-                    messages=messages,
-                    model=config.model_id,
-                    temperature=temp,
-                    max_tokens=tokens,
-                )
+                # Lazy import для Gemini (только если используется напрямую)
+                try:
+                    from llm.gemini import gemini
+                    response = await gemini.complete(
+                        messages=messages,
+                        model=config.model_id,
+                        temperature=temp,
+                        max_tokens=tokens,
+                    )
+                except ImportError:
+                    # Fallback to OpenRouter if Gemini not available
+                    logger.warning("gemini_import_failed, using openrouter")
+                    response = await openrouter.complete(
+                        messages=messages,
+                        model=config.model_id,
+                        temperature=temp,
+                        max_tokens=tokens,
+                    )
             elif config.provider == "groq":
                 response = await groq.complete(
                     messages=messages,
