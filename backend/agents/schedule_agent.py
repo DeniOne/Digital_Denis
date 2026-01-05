@@ -8,6 +8,7 @@ Parses user intent and creates schedule items.
 
 import json
 import re
+import pytz
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict
 from uuid import UUID
@@ -99,8 +100,9 @@ class ScheduleAgent(BaseAgent):
         Extract schedule intent from user message using LLM.
         """
         
-        today = date.today()
-        now = datetime.now()
+        tz = pytz.timezone("Europe/Moscow")
+        now = datetime.now(tz)
+        today = now.date()
         
         # Format history for context (last 5 messages)
         history_str = ""
@@ -250,8 +252,8 @@ class ScheduleAgent(BaseAgent):
                 return (
                     f"✅ **Встреча добавлена в расписание**\n\n"
                     f"📌 {title}\n"
-                    f"📅 {start_at.strftime('%d.%m.%Y')}\n"
-                    f"🕐 {start_at.strftime('%H:%M')} — {end_at.strftime('%H:%M') if end_at else f'+{duration} мин'}\n"
+                    f"📅 {start_at.astimezone(pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y')}\n"
+                    f"🕐 {start_at.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M')} — {end_at.astimezone(pytz.timezone('Europe/Moscow')).strftime('%H:%M') if end_at else f'+{duration} мин'}\n"
                     f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин",
                     {"item_id": str(item.id), "item_type": "event"}
                 )
@@ -272,7 +274,7 @@ class ScheduleAgent(BaseAgent):
                 return (
                     f"✅ **Задача добавлена**\n\n"
                     f"📌 {title}\n"
-                    f"⏰ Дедлайн: {due_at.strftime('%d.%m.%Y %H:%M')}\n"
+                    f"⏰ Дедлайн: {due_at.astimezone(pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y %H:%M')}\n"
                     f"🔔 Напомню за {intent.get('remind_before_minutes', 15)} мин",
                     {"item_id": str(item.id), "item_type": "task"}
                 )
@@ -292,7 +294,7 @@ class ScheduleAgent(BaseAgent):
                 return (
                     f"✅ **Напоминание создано**\n\n"
                     f"📌 {title}\n"
-                    f"🔔 {remind_at.strftime('%d.%m.%Y в %H:%M')}",
+                    f"🔔 {remind_at.astimezone(pytz.timezone('Europe/Moscow')).strftime('%d.%m.%Y в %H:%M')}",
                     {"item_id": str(item.id), "item_type": "reminder"}
                 )
             
@@ -426,7 +428,6 @@ class ScheduleAgent(BaseAgent):
             
             # If naive, assume Moscow (as requested by bot context)
             if dt.tzinfo is None:
-                import pytz
                 tz = pytz.timezone("Europe/Moscow")
                 dt = tz.localize(dt)
             

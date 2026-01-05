@@ -210,7 +210,7 @@ class ScheduleService:
             schedule_type=intent.schedule_type,
             times_of_day=intent.times_of_day,
             days_of_week=intent.days_of_week,
-            start_date=intent.start_date or date.today(),
+            start_date=intent.start_date or datetime.now(pytz.timezone("Europe/Moscow")).date(),
             end_date=intent.end_date,
             timezone=intent.timezone,
             remind_before_minutes=intent.remind_before_minutes,
@@ -229,7 +229,7 @@ class ScheduleService:
                 active_days=intent.cycle.active_days,
                 pause_days=intent.cycle.pause_days,
                 total_cycles=intent.cycle.total_cycles,
-                cycle_start_date=intent.start_date or date.today(),
+                cycle_start_date=intent.start_date or datetime.now(pytz.timezone("Europe/Moscow")).date(),
                 is_in_pause=False,
             )
             db.add(cycle)
@@ -613,7 +613,8 @@ class ReminderGenerator:
     def generate(self, days_ahead: int = 500) -> List[ReminderInstance]:
         """Generate instances for requested period starting from today."""
         instances = []
-        today = date.today()
+        msk_tz = pytz.timezone(self.config.timezone or "Europe/Moscow")
+        today = datetime.now(msk_tz).date()
         
         # We check a window of 'days_ahead' starting from TODAY
         # but only for days >= start_date.

@@ -59,66 +59,85 @@ class ReminderScheduler:
     async def _check_pending_reminders(self):
         """Check for pending reminders and send notifications."""
         from db.database import async_session_maker
-        from memory.schedule_models import ScheduleItem, ItemType, ItemStatus
+        from memory.schedule_models import (
+            ScheduleItem, ItemType, ItemStatus, 
+            ReminderInstance, ReminderStatus, ReminderSchedule
+        )
         from memory.models import User
-        from sqlalchemy import select, and_
+        from sqlalchemy import select, and_, or_
         import pytz
         
         moscow_tz = pytz.timezone("Europe/Moscow")
         now = datetime.now(moscow_tz)
         
         async with async_session_maker() as db:
-            # Find reminders that are due (within the last 5 minutes to catch any missed ones)
+            # --- 1. Process Single Items (ScheduleItem) ---
             query = select(ScheduleItem, User).join(
                 User, ScheduleItem.user_id == User.id
             ).where(
                 and_(
-                    ScheduleItem.item_type == ItemType.REMINDER,
                     ScheduleItem.status == ItemStatus.PENDING,
-                    ScheduleItem.start_at <= now,
-                    ScheduleItem.start_at >= now - timedelta(minutes=5),
+                    or_(
+                        and_(ScheduleItem.start_at <= now, ScheduleItem.start_at >= now - timedelta(minutes=15)),
+                        and_(ScheduleItem.due_at <= now, ScheduleItem.due_at >= now - timedelta(minutes=15)),
+                    )
                 )
             )
             
             result = await db.execute(query)
             items = result.all()
             
-            if not items:
-                return
-            
-            logger.info("pending_reminders_found", count=len(items))
-            
             for item, user in items:
                 if user.telegram_id:
+                    # Determine display time
+                    display_time = item.start_at or item.due_at
+                    prefix = "🔔"
+                    if item.item_type == ItemType.TASK: prefix = "📅 Задача:"
+                    elif item.item_type == ItemType.EVENT: prefix = "🗓 Встреча:"
+                    
                     success = await self._send_telegram_notification(
                         telegram_id=user.telegram_id,
                         title=item.title,
-                        remind_at=item.start_at,
+                        remind_at=display_time,
                         item_id=str(item.id),
+                        prefix=prefix
                     )
                     
                     if success:
-                        # Mark as completed
                         item.status = ItemStatus.COMPLETED
-                        logger.info(
-                            "reminder_sent",
-                            item_id=str(item.id),
-                            telegram_id=user.telegram_id,
-                        )
-                    else:
-                        logger.warning(
-                            "reminder_send_failed",
-                            item_id=str(item.id),
-                            telegram_id=user.telegram_id,
-                        )
+                        logger.info("reminder_sent", item_id=str(item.id))
                 else:
-                    # No telegram_id, mark as completed anyway
                     item.status = ItemStatus.COMPLETED
-                    logger.warning(
-                        "reminder_no_telegram",
-                        item_id=str(item.id),
-                        user_id=str(user.id),
+
+            # --- 2. Process Recurring Instances (ReminderInstance) ---
+            query_inst = select(ReminderInstance, ReminderSchedule, User).join(
+                ReminderSchedule, ReminderInstance.schedule_id == ReminderSchedule.id
+            ).join(
+                User, ReminderSchedule.user_id == User.id
+            ).where(
+                and_(
+                    ReminderInstance.status == ReminderStatus.PENDING,
+                    ReminderInstance.remind_at <= now,
+                    ReminderInstance.remind_at >= now - timedelta(minutes=15),
+                )
+            )
+            
+            res_inst = await db.execute(query_inst)
+            for inst, sched, user in res_inst.all():
+                if user.telegram_id:
+                    success = await self._send_telegram_notification(
+                        telegram_id=user.telegram_id,
+                        title=sched.title,
+                        remind_at=inst.remind_at,
+                        item_id=f"inst:{inst.id}",
+                        prefix="💊 Напоминание:"
                     )
+                    
+                    if success:
+                        inst.status = ReminderStatus.COMPLETED
+                        logger.info("instance_sent", inst_id=str(inst.id))
+                else:
+                    inst.status = ReminderStatus.COMPLETED
             
             await db.commit()
 
@@ -129,6 +148,7 @@ class ReminderScheduler:
         title: str,
         remind_at: datetime,
         item_id: str,
+        prefix: str = "🔔 Напоминание:",
     ) -> bool:
         """Send reminder notification via Telegram."""
         try:
@@ -139,7 +159,7 @@ class ReminderScheduler:
             
             # Format message
             time_str = remind_at.strftime("%H:%M")
-            message = f"🔔 **Напоминание**\n\n{title}\n⏰ {time_str}"
+            message = f"{prefix}\n\n{title}\n⏰ {time_str}"
             
             # Send via Telegram Bot API
             url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
