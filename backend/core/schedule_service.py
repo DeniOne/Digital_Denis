@@ -11,7 +11,7 @@ from typing import List, Optional
 from uuid import UUID
 from dataclasses import dataclass
 
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -469,6 +469,94 @@ class ScheduleService:
             logger.info("item_cancelled", item_id=str(item_id))
         
         return item
+
+    async def cancel_anything(
+        self,
+        db: AsyncSession,
+        user_id: UUID,
+        item_id: UUID,
+    ) -> bool:
+        """Cancel either a ScheduleItem or a ReminderSchedule."""
+        
+        # 1. Try ScheduleItem
+        item = await self.cancel_item(db, item_id, user_id)
+        if item:
+            return True
+            
+        # 2. Try ReminderSchedule
+        result = await db.execute(
+            select(ReminderSchedule).where(
+                ReminderSchedule.id == item_id,
+                ReminderSchedule.user_id == user_id
+            )
+        )
+        schedule = result.scalar_one_or_none()
+        if schedule:
+            schedule.is_active = False
+            # Also cancel all pending instances
+            await db.execute(
+                update(ReminderInstance)
+                .where(
+                    ReminderInstance.schedule_id == schedule.id,
+                    ReminderInstance.status == ReminderStatus.PENDING
+                )
+                .values(status=ReminderStatus.MISSED)
+            )
+            await db.flush()
+            logger.info("schedule_cancelled", schedule_id=str(item_id))
+            return True
+            
+        return False
+
+    async def find_active_items(
+        self,
+        db: AsyncSession,
+        user_id: UUID,
+        query: str = None,
+        limit: int = 5
+    ) -> List[dict]:
+        """Find active schedule items or recurring reminders by keyword."""
+        
+        # This is a simplified search for the agent to find what to cancel
+        # In a real app, we'd use fuzzy search or vector search
+        
+        items_list = []
+        
+        # 1. Search ScheduleItems
+        stmt = select(ScheduleItem).where(
+            ScheduleItem.user_id == user_id,
+            ScheduleItem.status.in_([ItemStatus.PENDING, ItemStatus.IN_PROGRESS])
+        )
+        if query:
+            stmt = stmt.where(ScheduleItem.title.ilike(f"%{query}%"))
+            
+        res = await db.execute(stmt.limit(limit).order_by(ScheduleItem.created_at.desc()))
+        for item in res.scalars().all():
+            items_list.append({
+                "id": item.id,
+                "title": item.title,
+                "type": "item",
+                "item_type": item.item_type.value if item.item_type else "reminder"
+            })
+            
+        # 2. Search ReminderSchedules
+        stmt = select(ReminderSchedule).where(
+            ReminderSchedule.user_id == user_id,
+            ReminderSchedule.is_active == True
+        )
+        if query:
+            stmt = stmt.where(ReminderSchedule.title.ilike(f"%{query}%"))
+            
+        res = await db.execute(stmt.limit(limit).order_by(ReminderSchedule.created_at.desc()))
+        for schedule in res.scalars().all():
+            items_list.append({
+                "id": schedule.id,
+                "title": schedule.title,
+                "type": "recurring",
+                "item_type": "recurring"
+            })
+            
+        return items_list
     
     async def pause_schedule(
         self,

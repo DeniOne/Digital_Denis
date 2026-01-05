@@ -1,6 +1,6 @@
 """
-Digital Den — Schedule Agent
-═══════════════════════════════════════════════════════════════════════════
+Digital Den - Schedule Agent
+===========================================================================
 
 Agent for managing schedules: events, tasks, reminders.
 Parses user intent and creates schedule items.
@@ -50,15 +50,15 @@ class ScheduleAgent(BaseAgent):
         """Process schedule-related request."""
         
         try:
-            # Extract intent from message
-            intent = await self._extract_intent(context.user_message)
+            # Extract intent from message (with history for relative references)
+            intent = await self._extract_intent(context.user_message, context.history)
             
             if not intent:
                 return AgentResponse(
                     content="Извини, не смог понять запрос о расписании. "
                             "Попробуй переформулировать, например:\n"
                             "• \"Напомни позвонить маме завтра в 15:00\"\n"
-                            "• \"Поставь встречу с клиентом на понедельник в 10:00\"",
+                            "• \"Отмени прошлое напоминание\"",
                     agent=self.name,
                     save_to_memory=False,
                 )
@@ -71,8 +71,8 @@ class ScheduleAgent(BaseAgent):
                     save_to_memory=False,
                 )
             
-            # Create schedule item based on type
-            result, extra_data = await self._create_from_intent(intent, context)
+            # Execute action from intent
+            result, extra_data = await self._execute_intent(intent, context)
             
             return AgentResponse(
                 content=result,
@@ -94,7 +94,7 @@ class ScheduleAgent(BaseAgent):
     # Intent Extraction
     # ─────────────────────────────────────────────────────────────────────────
     
-    async def _extract_intent(self, message: str) -> Optional[dict]:
+    async def _extract_intent(self, message: str, history: List[dict] = None) -> Optional[dict]:
         """
         Extract schedule intent from user message using LLM.
         """
@@ -102,70 +102,59 @@ class ScheduleAgent(BaseAgent):
         today = date.today()
         now = datetime.now()
         
-        prompt = f"""Ты — парсер расписания. Извлеки информацию о событии/задаче/напоминании из сообщения.
+        # Format history for context (last 5 messages)
+        history_str = ""
+        if history:
+            history_str = "\n".join([f"{m.get('role', 'user')}: {m.get('content', '')}" for m in history[-5:]])
+        
+        prompt = f"""Ты — интеллектуальный ассистент расписания. Проанализируй сообщение и извлеки намерение.
+Используй контекст предыдущих сообщений, чтобы понять относительные ссылки (например, "это напоминание", "прошлый раз", "про Рому").
 
 Сегодня: {today.strftime('%Y-%m-%d')} ({today.strftime('%A')})
 Текущее время: {now.strftime('%H:%M')}
 
-Сообщение пользователя:
+Контекст последних сообщений:
+{history_str}
+
+Текущее сообщение пользователя:
 "{message}"
 
-Определи тип:
-- "event" — встреча, событие с началом и концом (длительностью)
-- "task" — задача с дедлайном
-- "reminder" — одноразовое напоминание
-- "recurring" — повторяющееся напоминание
+Определи действие:
+- "create" - создать новое событие/задачу/напоминание
+- "cancel" - отменить/удалить существующее напоминание или задачу
+- "list" - показать список дел
 
-Верни JSON (без markdown!):
+Верни JSON:
 {{
-    "action": "create",
+    "action": "create|cancel|list",
     "item_type": "event|task|reminder|recurring",
-    "title": "...",
-    "description": null,
-    "category": "general|work|personal|health",
+    "title": "...", // О чем речь (например, 'День рождения Ромы')
+    "date_reference": "...", // Упоминаемая дата, если есть (например, '16 мая')
     
-    // Для event/reminder (ISO format):
+    // Для action=create (ISO format):
     "start_at": "2025-01-05T14:00:00",
     "end_at": "2025-01-05T15:00:00",
     "duration_minutes": 60,
-    
-    // Для task:
     "due_at": "2025-01-05T18:00:00",
-    
-    // Для recurring:
     "schedule_type": "daily|weekly|monthly|yearly|interval",
-    "times_of_day": ["08:00", "14:00", "20:00"],
-    "days_of_week": [1, 2, 3, 4, 5],
-    "start_date": "2025-01-01",
-    "end_date": "2025-12-31",
-    
-    // Цикл (если указан):
-    "cycle": {{
-        "active_days": 5,
-        "pause_days": 30,
-        "total_cycles": 12
-    }},
-    
-    "timezone": "Europe/Moscow",
-    "remind_before_minutes": 15,
+    "times_of_day": ["08:00"],
+    "start_date": "2025-05-16",
+    "end_date": null,
     
     "needs_clarification": false,
     "clarification_question": null
 }}
 
 Правила:
-1. Если не указано время — используй 08:00:00 по умолчанию (например, "2025-01-05T08:00:00")
+1. Если не указано время - используй 08:00:00 (например, "2025-01-05T08:00:00")
 2. "Завтра" = {(today + timedelta(days=1)).strftime('%Y-%m-%d')}
-3. "Через час" = {(now + timedelta(hours=1)).strftime('%H:%M')}
-4. Если не указана длительность встречи — по умолчанию 1 час
-5. "Каждый день" → schedule_type: "daily"
-6. "По будням" → days_of_week: [1,2,3,4,5]
-7. "Каждый год", "день рождения", "ежегодно" → schedule_type: "yearly"
-8. "Каждый месяц" → schedule_type: "monthly"
-9. "5 дней приём, 30 перерыв" → cycle
-10. КРИТИЧЕСКИ ВАЖНО: Если пользователь говорит "день рождения 16 мая" или "родился 16 мая", установи "start_date" именно на эту дату (например, "2025-05-16"), а не на сегодня. Это точка отсчета для ежегодного цикла.
+3. "Каждый год", "день рождения", "ежегодно" → schedule_type: "yearly"
+4. "Каждый месяц" → schedule_type: "monthly"
+5. КРИТИЧЕСКИ ВАЖНО: При создании дня рождения ("день рождения 16 мая"), установи "start_date" именно на эту дату (например, "2025-05-16"), а не на сегодня.
+6. Для КОРРЕКТНОЙ ОТМЕНЫ: если пользователь говорит "отмени его", посмотри в контексте, о каком последнем деле/напоминании шла речь, и заполни "title" и "item_type" соответственно.
 
 Верни ТОЛЬКО JSON, без объяснений:"""
+
 
         try:
             response = await openrouter.complete(
@@ -202,9 +191,23 @@ class ScheduleAgent(BaseAgent):
             return None
     
     # ─────────────────────────────────────────────────────────────────────────
-    # Create from Intent
-    # ─────────────────────────────────────────────────────────────────────────
+    # Intent Execution
+    # =========================================================================
     
+    async def _execute_intent(self, intent: dict, context: AgentContext) -> tuple[str, dict]:
+        """Execute schedule action from parsed intent."""
+        
+        action = intent.get("action", "create")
+        
+        if action == "create":
+            return await self._create_from_intent(intent, context)
+        elif action == "cancel":
+            return await self._cancel_from_intent(intent, context)
+        elif action == "list":
+            return "Я скоро научусь показывать список всех дел! А пока посмотри их в Календаре в Web-интерфейсе.", {}
+        else:
+            return f"⚠️ Действие '{action}' пока не поддерживается.", {}
+
     async def _create_from_intent(self, intent: dict, context: AgentContext) -> tuple[str, dict]:
         """Create schedule item from parsed intent."""
         
@@ -350,10 +353,59 @@ class ScheduleAgent(BaseAgent):
         except Exception as e:
             logger.error("create_from_intent_error", error=str(e), intent=intent)
             return f"⚠️ Ошибка создания: {str(e)}", {}
+
+    async def _cancel_from_intent(self, intent: dict, context: AgentContext) -> tuple[str, dict]:
+        """Cancel schedule item based on intent."""
+        
+        db = context.db
+        user_id = context.user_id
+        title = intent.get("title")
+        
+        try:
+            # 1. Find candidate items
+            candidates = await schedule_service.find_active_items(
+                db=db,
+                user_id=user_id,
+                query=title
+            )
+            
+            if not candidates:
+                return f"🔍 Я не нашёл активных напоминаний или задач '{title or 'с таким названием'}', которые можно отменить.", {}
+            
+            # 2. If title matches exactly or only one item found
+            target = None
+            if len(candidates) == 1:
+                target = candidates[0]
+            else:
+                # Try to find best match among multiple
+                if title:
+                    for c in candidates:
+                        if title.lower() in c['title'].lower():
+                            target = c
+                            break
+                
+            if not target:
+                items_str = "\n".join([f"• {c['title']}" for c in candidates])
+                return (
+                    f"🤔 Нашёл несколько похожих записей. Какую именно отменить?\n\n{items_str}",
+                    {"candidates": [str(c['id']) for c in candidates]}
+                )
+            
+            # 3. Perform cancellation
+            success = await schedule_service.cancel_anything(db, user_id, target['id'])
+            
+            if success:
+                return f"✅ Отменил: **{target['title']}**", {"cancelled_id": str(target['id'])}
+            else:
+                return f"❌ Не удалось отменить '{target['title']}'. Попробуй позже.", {}
+                
+        except Exception as e:
+            logger.error("cancel_from_intent_error", error=str(e), intent=intent)
+            return f"⚠️ Ошибка при отмене: {str(e)}", {}
     
     # ─────────────────────────────────────────────────────────────────────────
     # Helpers
-    # ─────────────────────────────────────────────────────────────────────────
+    # =========================================================================
     
     def _parse_datetime(self, value: Optional[str]) -> Optional[datetime]:
         """Parse datetime from ISO string with timezone safety."""
