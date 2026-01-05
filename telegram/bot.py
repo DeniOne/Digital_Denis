@@ -8,6 +8,7 @@ Telegram interface for Digital Den.
 import os
 import logging
 import uuid
+import asyncio
 from pathlib import Path
 from datetime import date, timedelta
 import tempfile
@@ -130,6 +131,41 @@ async def send_to_backend(user: any, message: str) -> dict:
         except Exception as e:
             logger.error(f"Error: {e}")
             return {"response": f"Ошибка: {str(e)}"}
+
+
+async def send_typing_periodically(chat, stop_event: asyncio.Event):
+    """Send typing indicator every 4 seconds until stop_event is set."""
+    while not stop_event.is_set():
+        try:
+            await chat.send_action("typing")
+        except Exception:
+            pass
+        # Wait 4 seconds or until stopped
+        try:
+            await asyncio.wait_for(stop_event.wait(), timeout=4.0)
+        except asyncio.TimeoutError:
+            continue  # Continue sending typing
+
+
+async def send_to_backend_with_typing(user: any, message: str, chat) -> dict:
+    """Send to backend while showing typing indicator periodically."""
+    stop_event = asyncio.Event()
+    
+    # Start typing task
+    typing_task = asyncio.create_task(send_typing_periodically(chat, stop_event))
+    
+    try:
+        # Make the actual request
+        result = await send_to_backend(user, message)
+        return result
+    finally:
+        # Stop typing indicator
+        stop_event.set()
+        typing_task.cancel()
+        try:
+            await typing_task
+        except asyncio.CancelledError:
+            pass
             
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -413,15 +449,10 @@ async def schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle text messages."""
     user = update.effective_user
+    chat = update.message.chat
     
-    # Send typing indicator
-    try:
-        await update.message.chat.send_action("typing")
-    except Exception:
-        pass
-    
-    # Get response from backend
-    data = await send_to_backend(user, update.message.text)
+    # Get response from backend (with periodic typing indicator)
+    data = await send_to_backend_with_typing(user, update.message.text, chat)
     response_text = data.get("response", "Ошибка: нет ответа")
     metadata = data.get("metadata")
     
@@ -448,6 +479,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle voice messages."""
     user = update.effective_user
+    chat = update.message.chat
     
     # Download voice file
     voice_file = await update.message.voice.get_file()
@@ -457,7 +489,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         audio_path = Path(f.name)
     
     try:
-        # Send typing indicator
+        # Send typing indicator for transcription
         try:
             await update.message.chat.send_action("typing")
         except Exception:
@@ -474,14 +506,8 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Echo transcription
         await update.message.reply_text(f"🎤 Распознано: {transcription}")
         
-        # Send typing indicator again
-        try:
-            await update.message.chat.send_action("typing")
-        except Exception:
-            pass
-        
-        # Get response from backend
-        data = await send_to_backend(user, transcription)
+        # Get response from backend (with periodic typing indicator)
+        data = await send_to_backend_with_typing(user, transcription, chat)
         response_text = data.get("response", "Ошибка: нет ответа")
         metadata = data.get("metadata")
         
