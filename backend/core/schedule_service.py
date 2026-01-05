@@ -222,7 +222,7 @@ class ScheduleService:
         await db.flush()
         
         # Create cycle if needed
-        cycle = None  # To hold the cycle object if created
+        cycle = None
         if intent.cycle:
             cycle = ReminderCycle(
                 schedule_id=schedule.id,
@@ -233,12 +233,11 @@ class ScheduleService:
                 is_in_pause=False,
             )
             db.add(cycle)
-            # schedule.cycle = cycle  # Removed: assignment here is tricky with async session flush behavior
         
         await db.flush()
         
         # Generate instances for next 7 days
-        # Pass cycle explicitly to avoid lazy loading trigger on schedule.cycle
+        # IMPORTANT: Always pass explicit_cycle (even if None) to avoid touching schedule.cycle relationship
         generator = ReminderGenerator(schedule, explicit_cycle=cycle)
         instances = generator.generate(days_ahead=7)
         
@@ -430,6 +429,8 @@ class ReminderGenerator:
         self.schedule = schedule
         self.tz = pytz.timezone(schedule.timezone)
         self.explicit_cycle = explicit_cycle
+        # We store whether we HAVE a cycle to avoid accessing the relationship schedule.cycle later
+        self.has_cycle = explicit_cycle is not None
     
     def generate(self, days_ahead: int = 7) -> List[ReminderInstance]:
         """Generate instances for the next N days."""
@@ -480,11 +481,12 @@ class ReminderGenerator:
     def _is_active_day(self, check_date: date) -> bool:
         """Check if date is an active day (not in pause period)."""
         
-        # Use explicit cycle if provided (avoids async IO), else try to load from relationship
-        cycle = self.explicit_cycle if self.explicit_cycle is not None else self.schedule.cycle
-        
-        if not cycle:
+        if not self.has_cycle:
             return True  # No cycle = always active
+            
+        cycle = self.explicit_cycle
+        if not cycle:
+            return True # Should not happen if has_cycle is True
         
         # Calculate position in cycle
         days_since_start = (check_date - cycle.cycle_start_date).days
