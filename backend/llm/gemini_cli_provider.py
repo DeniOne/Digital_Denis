@@ -20,7 +20,7 @@ class GeminiCLIProvider:
     Provider that interacts with 'gemini-chat-cli' installed in the system.
     """
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash-latest"):
         self.api_key = api_key or settings.google_api_key
         self.cli_command = "/usr/bin/gemini" 
         
@@ -29,7 +29,7 @@ class GeminiCLIProvider:
         messages: List[LLMMessage],
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        model: str = "gemini-2.0-flash" 
+        model: str = "gemini-1.5-flash-latest" 
     ) -> LLMResponse:
         """
         Generate completion using Gemini CLI.
@@ -50,6 +50,9 @@ class GeminiCLIProvider:
             
             process = await asyncio.create_subprocess_exec(
                 self.cli_command,
+                "-m",
+                model,
+                "-p",
                 prompt,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -96,4 +99,4 @@ class GeminiCLIProvider:
         return text.strip()
 
 # Global instance
-gemini_cli = GeminiCLIProvider()
+gemini_cli = GeminiCLIProvider(api_key=settings.google_api_key)
