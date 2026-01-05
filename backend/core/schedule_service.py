@@ -236,7 +236,9 @@ class ScheduleService:
         
         await db.flush()
         
-        # Generate instances for next 7 days using GeneratorConfig (ORM-agnostic)
+        # Generate instances for next 500 days (ensures visibility for annual events)
+        logger.info("generating_recurring_instances", schedule_id=str(schedule.id), start_date=str(schedule.start_date), type=schedule.schedule_type.value)
+        
         config = GeneratorConfig(
             schedule_id=schedule.id,
             start_date=schedule.start_date,
@@ -250,7 +252,7 @@ class ScheduleService:
         )
         
         generator = ReminderGenerator(config)
-        instances = generator.generate(days_ahead=365)
+        instances = generator.generate(days_ahead=500)
         
         for inst in instances:
             db.add(inst)
@@ -520,16 +522,17 @@ class ReminderGenerator:
         self.config = config
         self.tz = pytz.timezone(config.timezone)
     
-    def generate(self, days_ahead: int = 7) -> List[ReminderInstance]:
-        """Generate instances for the next N days."""
-        
+    def generate(self, days_ahead: int = 500) -> List[ReminderInstance]:
+        """Generate instances for requested period starting from today."""
         instances = []
         today = date.today()
         
-        for day_offset in range(days_ahead):
+        # We check a window of 'days_ahead' starting from TODAY
+        # but only for days >= start_date.
+        for day_offset in range(days_ahead + 1):
             current_date = today + timedelta(days=day_offset)
             
-            # Check date bounds
+            # Skip if before start_date (schedule hasn't started yet)
             if current_date < self.config.start_date:
                 continue
             if self.config.end_date and current_date > self.config.end_date:
