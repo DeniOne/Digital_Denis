@@ -21,19 +21,22 @@ export default function ChatPage() {
         }
     }, [messages]);
 
-    // Load chat history on mount if sessionId exists
+    // Load chat history on mount - always try to load
     useEffect(() => {
         const loadHistory = async () => {
-            if (!sessionId) return;
-
             try {
-                const data = await messagesApi.getHistory(sessionId);
+                // Use sessionId if available, otherwise use 'default' - backend will redirect based on user
+                const data = await messagesApi.getHistory(sessionId || "default");
                 if (data.messages && data.messages.length > 0) {
                     setMessages(data.messages.map((msg: any) => ({
                         role: msg.role,
                         content: msg.content,
                         agent: msg.agent || null
                     })));
+                    // Update sessionId from server response if returned
+                    if (data.session_id && data.session_id !== sessionId) {
+                        setSessionId(data.session_id);
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load chat history:", error);
@@ -41,7 +44,7 @@ export default function ChatPage() {
         };
 
         loadHistory();
-    }, [sessionId]);
+    }, []);
 
 
     const handleTranscript = (text: string, isFinal: boolean) => {
