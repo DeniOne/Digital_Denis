@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useMemories } from "@/lib/hooks";
-import { MemoryItem } from "@/lib/api";
+import { MemoryItem, memoryApi } from "@/lib/api";
+import { mutate } from "swr";
 
 const memoryTypes = [
     { value: 'all', label: 'Все типы' },
@@ -16,6 +17,7 @@ export default function MemoryExplorer() {
     const [search, setSearch] = useState('');
     const [type, setType] = useState('all');
     const [topic, setTopic] = useState<string | undefined>();
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const { data, isLoading } = useMemories({
         item_type: type === 'all' ? undefined : type,
@@ -28,6 +30,22 @@ export default function MemoryExplorer() {
     const filteredMemories = memories?.filter((m: MemoryItem) =>
         m.content.toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleDelete = async (id: string, title: string) => {
+        if (!confirm(`Удалить это воспоминание?\n\n"${title.substring(0, 100)}..."`)) return;
+
+        setDeletingId(id);
+        try {
+            await memoryApi.delete(id);
+            // Обновить список
+            mutate('/api/v1/memory');
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Ошибка при удалении');
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const getTypeLabel = (itemType: string) => {
         switch (itemType) {
@@ -93,15 +111,25 @@ export default function MemoryExplorer() {
                     {filteredMemories.map((memory: MemoryItem) => (
                         <div
                             key={memory.id}
-                            className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors group"
+                            className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors group relative"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <span className={`text-xs px-2 py-1 rounded-md ${getTypeStyle(memory.item_type)}`}>
                                     {getTypeLabel(memory.item_type)}
                                 </span>
-                                <span className="text-xs text-zinc-500">
-                                    {new Date(memory.created_at).toLocaleDateString()}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-zinc-500">
+                                        {new Date(memory.created_at).toLocaleDateString()}
+                                    </span>
+                                    <button
+                                        onClick={() => handleDelete(memory.id, memory.content)}
+                                        disabled={deletingId === memory.id}
+                                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-all disabled:opacity-50"
+                                        title="Удалить"
+                                    >
+                                        {deletingId === memory.id ? '⏳' : '🗑️'}
+                                    </button>
+                                </div>
                             </div>
 
                             <p className="text-zinc-200 line-clamp-3 mb-4 leading-relaxed">
