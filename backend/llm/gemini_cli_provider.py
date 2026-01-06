@@ -75,6 +75,7 @@ class GeminiCLIProvider:
                 content=content,
                 model=f"cli:{model}",
                 tokens_used=len(content) // 4, # Estimated
+                finish_reason="stop"
             )
             
         except Exception as e:
