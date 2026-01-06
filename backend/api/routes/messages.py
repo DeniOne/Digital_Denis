@@ -476,6 +476,6 @@ async def get_session_history(
         target_session_id = str(current_user.telegram_id)
         print(f"DEBUG: Redirecting session {session_id} -> {target_session_id}")
         
-    history = await short_term_memory.get_chat_history(target_session_id)
+    history = await short_term_memory.get_chat_history(target_session_id, limit=100)
     
     return {"session_id": target_session_id, "messages": history}
