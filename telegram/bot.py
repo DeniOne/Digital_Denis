@@ -112,7 +112,7 @@ async def send_to_backend(user: any, message: str) -> dict:
             response = await client.post(
                 f"{BACKEND_URL}/api/v1/messages/telegram",
                 json=payload,
-                timeout=120.0,
+                timeout=300.0,  # 5 minutes for CLI responses
             )
             
             if response.status_code == 200:
@@ -125,7 +125,7 @@ async def send_to_backend(user: any, message: str) -> dict:
                 return {"response": f"Ошибка сервера: {response.status_code}"}
                 
         except httpx.TimeoutException:
-            return {"response": "Превышено время ожидания. Попробуйте позже."}
+            return {"response": "⏳ Запрос обрабатывается дольше обычного.\n\nОтвет появится в веб-чате: http://151.243.109.210:3000/chat"}
         except httpx.ConnectError:
             return {"response": "Не удалось подключиться к серверу."}
         except Exception as e:
