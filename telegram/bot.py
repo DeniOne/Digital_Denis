@@ -166,6 +166,61 @@ async def send_to_backend_with_typing(user: any, message: str, chat) -> dict:
             await typing_task
         except asyncio.CancelledError:
             pass
+
+
+async def send_to_backend_with_edit(user: any, message: str, original_message) -> tuple:
+    """
+    Send to backend, showing placeholder that gets edited with response.
+    Returns (result_dict, sent_message) tuple.
+    """
+    
+    # Send thinking message immediately
+    thinking_msg = await original_message.reply_text("🤔 Думаю...")
+    
+    try:
+        # Make the actual request
+        result = await send_to_backend(user, message)
+        
+        response_text = result.get("response", "Ошибка: нет ответа")
+        metadata = result.get("metadata")
+        
+        # Build reply markup if needed
+        reply_markup = None
+        if metadata and metadata.get("item_id"):
+            item_id = metadata["item_id"]
+            keyboard = [
+                [
+                    InlineKeyboardButton("✅ Выполнено", callback_data=f"reminder:done:{item_id}"),
+                    InlineKeyboardButton("⏰ +15 мин", callback_data=f"reminder:snooze:{item_id}"),
+                ],
+                [
+                    InlineKeyboardButton("❌ Пропустить", callback_data=f"reminder:skip:{item_id}")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Edit thinking message with actual response
+        try:
+            await thinking_msg.edit_text(response_text, reply_markup=reply_markup, parse_mode="Markdown")
+        except Exception as edit_error:
+            # If Markdown parsing fails, try without parse_mode
+            logger.warning(f"Markdown edit failed, retrying plain: {edit_error}")
+            try:
+                await thinking_msg.edit_text(response_text, reply_markup=reply_markup)
+            except Exception as e:
+                logger.error(f"Edit failed completely: {e}")
+                # Send a new message if edit fails
+                await original_message.reply_text(response_text, reply_markup=reply_markup)
+        
+        return result, thinking_msg
+        
+    except Exception as e:
+        logger.error(f"Backend request failed: {e}")
+        try:
+            await thinking_msg.edit_text(f"⚠️ Ошибка: {str(e)}")
+        except:
+            pass
+        return {"response": f"Ошибка: {str(e)}"}, thinking_msg
             
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -449,31 +504,9 @@ async def schedule_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle text messages."""
     user = update.effective_user
-    chat = update.message.chat
     
-    # Get response from backend (with periodic typing indicator)
-    data = await send_to_backend_with_typing(user, update.message.text, chat)
-    response_text = data.get("response", "Ошибка: нет ответа")
-    metadata = data.get("metadata")
-    
-    # Check for schedule confirmation metadata
-    reply_markup = None
-    if metadata and metadata.get("item_id"):
-        item_id = metadata["item_id"]
-        # Standard buttons for schedule items
-        keyboard = [
-            [
-                InlineKeyboardButton("✅ Выполнено", callback_data=f"reminder:done:{item_id}"),
-                InlineKeyboardButton("⏰ +15 мин", callback_data=f"reminder:snooze:{item_id}"),
-            ],
-            [
-                InlineKeyboardButton("❌ Пропустить", callback_data=f"reminder:skip:{item_id}")
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    # Send response
-    await update.message.reply_text(response_text, reply_markup=reply_markup, parse_mode="Markdown")
+    # Get response from backend with edit pattern (shows "Думаю..." then edits)
+    await send_to_backend_with_edit(user, update.message.text, update.message)
 
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -506,28 +539,8 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Echo transcription
         await update.message.reply_text(f"🎤 Распознано: {transcription}")
         
-        # Get response from backend (with periodic typing indicator)
-        data = await send_to_backend_with_typing(user, transcription, chat)
-        response_text = data.get("response", "Ошибка: нет ответа")
-        metadata = data.get("metadata")
-        
-        # Check for schedule confirmation metadata
-        reply_markup = None
-        if metadata and metadata.get("item_id"):
-            item_id = metadata["item_id"]
-            keyboard = [
-                [
-                    InlineKeyboardButton("✅ Выполнено", callback_data=f"reminder:done:{item_id}"),
-                    InlineKeyboardButton("⏰ +15 мин", callback_data=f"reminder:snooze:{item_id}"),
-                ],
-                [
-                    InlineKeyboardButton("❌ Пропустить", callback_data=f"reminder:skip:{item_id}")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-        # Send response
-        await update.message.reply_text(response_text, reply_markup=reply_markup, parse_mode="Markdown")
+        # Get response from backend with edit pattern (shows "Думаю..." then edits)
+        await send_to_backend_with_edit(user, transcription, update.message)
         
     finally:
         # Cleanup
