@@ -47,15 +47,12 @@ class GeminiCLIProvider:
                 "HOME": "/tmp"  # Для хранения кеша CLI
             }
             
-            # Если задан API ключ - используем его, иначе (None) - полагаемся на OAuth токены
-            if self.api_key:
-                env["GEMINI_API_KEY"] = self.api_key
+            # CLI автоматически выберет модель (gemini-2.0-flash по умолчанию)
+            # НЕ передаем API ключи — пусть использует OAuth из ~/.gemini/oauth_creds.json
             
             process = await asyncio.create_subprocess_exec(
                 self.cli_command,
-                "-m",
-                model,
-                "-p",
+                "-p", 
                 prompt,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
