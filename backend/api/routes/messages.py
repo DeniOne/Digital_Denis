@@ -432,11 +432,27 @@ async def send_telegram_message(
         
         # Fallback to classic request router
         try:
+            chat_id = str(request.telegram_id)  # Re-define for fallback scope
+            
             response = await request_router.route(
                 user_message=request.content,
                 session_id=str(session_id or chat_id),
                 db=db,
                 user_id=user.id,
+            )
+            
+            # Save to short-term memory (FALLBACK PATH)
+            print(f"DEBUG FALLBACK: Saving to Redis with chat_id={chat_id}")
+            await short_term_memory.add_message(
+                session_id=chat_id,
+                role="user",
+                content=request.content
+            )
+            await short_term_memory.add_message(
+                session_id=chat_id,
+                role="assistant",
+                content=response.content,
+                agent=response.agent
             )
             
             # Commit any changes from fallback (or previous steps)
