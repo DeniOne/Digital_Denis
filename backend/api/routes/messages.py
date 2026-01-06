@@ -461,16 +461,21 @@ async def get_session_history(
     """
     Get chat history for session.
     """
+    print(f"DEBUG: get_session_history requested for {session_id}")
+    print(f"DEBUG: current_user = {current_user}")
+    if current_user:
+        print(f"DEBUG: current_user.id = {current_user.id}")
+        print(f"DEBUG: current_user.telegram_id = {current_user.telegram_id}")
+    else:
+        print("DEBUG: current_user is None")
+
     target_session_id = session_id
     
     # If user is logged in and has telegram_id, use that for history
     if current_user and current_user.telegram_id:
         target_session_id = str(current_user.telegram_id)
+        print(f"DEBUG: Redirecting session {session_id} -> {target_session_id}")
         
     history = await short_term_memory.get_chat_history(target_session_id)
     
-    # Return the session_id that was actually used/requested to keep frontend consistent
-    # or return the redirected one? Frontend might rely on the one it requested.
-    # Let's return the target one so frontend *could* update if it wanted, 
-    # but primarily to show we used a specific ID.
     return {"session_id": target_session_id, "messages": history}
