@@ -377,6 +377,7 @@ async def send_telegram_message(
             llm_response = await core_agent.process(agent_context)
         
         # Save to short-term memory
+        print(f"DEBUG: Saving to Redis with chat_id={chat_id}")  # DEBUG
         await short_term_memory.add_message(
             session_id=chat_id,
             role="user",
