@@ -73,14 +73,14 @@ export default function MemoryExplorer() {
 
                 <div className="flex flex-wrap gap-3">
                     {/* Search */}
-                    <div className="relative">
+                    <div className="relative w-full sm:w-auto">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">🔍</span>
                         <input
                             type="text"
                             placeholder="Поиск воспоминаний..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            className="pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                         />
                     </div>
 

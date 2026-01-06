@@ -30,13 +30,19 @@ export default function Header() {
     return (
         <header
             className={`fixed top-0 right-0 h-16 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800 z-30
-        transition-all duration-300
-        ${sidebarOpen ? 'left-56' : 'left-16'}`}
+        transition-all duration-300 left-0
+        ${sidebarOpen ? 'md:left-56' : 'md:left-16'}`}
         >
-            <div className="h-full flex items-center justify-between px-6">
-                {/* Page Title */}
+            <div className="h-full flex items-center justify-between px-4 sm:px-6">
+                {/* Page Title & Mobile Toggle */}
                 <div className="flex items-center gap-4">
-                    <h1 className="text-xl font-semibold">{title}</h1>
+                    <button
+                        onClick={useUIStore().toggleSidebar}
+                        className="md:hidden p-2 -ml-2 hover:bg-zinc-800 rounded-lg"
+                    >
+                        <span className="text-xl">☰</span>
+                    </button>
+                    <h1 className="text-lg sm:text-xl font-semibold truncate max-w-[150px] sm:max-w-none">{title}</h1>
 
                     {/* Session indicator */}
                     {sessionId && (

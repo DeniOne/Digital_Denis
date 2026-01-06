@@ -25,9 +25,9 @@ export default function Shell({ children }: ShellProps) {
             {/* Main Content */}
             <main
                 className={`pt-16 min-h-screen transition-all duration-300
-          ${sidebarOpen ? 'pl-56' : 'pl-16'}`}
+          ${sidebarOpen ? 'md:pl-56' : 'md:pl-16'}`}
             >
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                     {children}
                 </div>
             </main>
