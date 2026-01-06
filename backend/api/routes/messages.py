@@ -6,7 +6,7 @@ API endpoints for message handling.
 """
 
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5, NAMESPACE_DNS
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -74,8 +74,12 @@ async def send_message(
         # Handle anonymous users (current_user can be None)
         if current_user and current_user.id:
             user_id = current_user.id
-            # Ensure conversation_id is a string, but try to keep it a UUID string if possible
-            conversation_id = str(session_id) if session_id else str(user_id)
+            if current_user.telegram_id:
+                # [Fix] Use telegram_id (as string) for conversation_id to sync with Telegram history
+                conversation_id = str(current_user.telegram_id)
+            else:
+                # Legacy behavior: use session_id or user_id
+                conversation_id = str(session_id) if session_id else str(user_id)
         else:
             # Anonymous user - handle session_id carefully
             try:
@@ -165,7 +169,11 @@ async def send_message(
                 try:
                     valid_session_uuid = UUID(conversation_id)
                 except:
-                    pass
+                    # If it's not a UUID, checking if it's a telegram ID
+                    if current_user and current_user.telegram_id and str(current_user.telegram_id) == conversation_id:
+                        valid_session_uuid = uuid5(NAMESPACE_DNS, f"telegram_{conversation_id}")
+                    else:
+                        pass
             
             # Сохранить exchange (user + assistant) как decision/insight
             saved_item = await long_term_memory.save(
