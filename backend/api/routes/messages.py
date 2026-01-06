@@ -337,13 +337,13 @@ async def send_telegram_message(
 """
         
         agent_context = AgentContext(
+            session_id=chat_id,
             user_message=request.content,
-            user_id=user.id,
-            session_id=session_id or deterministic_session_uuid,
             system_prompt=system_prompt,
-            memories=[],  # уже в framed_context
+            memories=[], # уже в framed_context
             history=formatted_messages,
             db=db,  # Нужно для schedule_agent
+            user_id=user.id, # Исправлено: передаем user_id
         )
         
         # Выбор агента на основе intent из RAG 2.0
