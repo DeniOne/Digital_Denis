@@ -187,5 +187,6 @@ async def delete_memory(
         raise HTTPException(status_code=404, detail="Memory item not found")
     
     success = await long_term_memory.delete(db, uuid_id)
+    await db.commit()
     
     return {"status": "deleted", "id": item_id}
