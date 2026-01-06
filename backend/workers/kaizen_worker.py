@@ -24,7 +24,7 @@ from memory.models import User
 logger = get_logger(__name__)
 
 class KaizenWorker:
-    def __init__(self):
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash-exp"):
         self.target_date = date.today() - timedelta(days=1)
         
     async def run(self):

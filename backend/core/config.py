@@ -87,8 +87,8 @@ class Settings(BaseSettings):
     encryption_key: str = "change-this-in-production-must-be-32-bytes-base64"
     
     # Push Notifications (VAPID)
-    vapid_private_key: str = "private_key.pem"
-    vapid_public_key: str = "BJZfDd76XxBDteP3n5ZjPCDz4-SJHeg9N174hPS6m6Q8Iz_bxXSHrduSItz-OHaK2dLglvjkY8GJjoV_EFZcat4"
+    vapid_private_key: str = "zbEb2KyvSVvP3L1-FPxwavNv2uBtd83Ph9YsDMggA2k"
+    vapid_public_key: str = "BIAZ8zpfTVa2KhuMsr75SZHnIp_QY7HD5xnkPhYCuWT1cYxnXQod_aesOnO8cLaseS5_CQOICK2bzyMsm2xnvE8"
     vapid_claims_sub: str = "mailto:admin@digitaldenis.local"
     
     # Google OAuth2

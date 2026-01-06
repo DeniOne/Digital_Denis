@@ -1,7 +1,7 @@
 import { api } from './api';
 import axios from 'axios';
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BJZfDd76XxBDteP3n5ZjPCDz4-SJHeg9N174hPS6m6Q8Iz_bxXSHrduSItz-OHaK2dLglvjkY8GJjoV_EFZcat4';
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BIAZ8zpfTVa2KhuMsr75SZHnIp_QY7HD5xnkPhYCuWT1cYxnXQod_aesOnO8cLaseS5_CQOICK2bzyMsm2xnvE8';
 
 function urlBase64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
