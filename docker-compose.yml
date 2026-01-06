@@ -62,7 +62,7 @@ services:
     volumes:
       - ./backend:/app
       - ./ai:/app/ai
-      - /root/.gemini:/tmp/.config/gemini # Mount OAuth creds for Gemini CLI
+      - /root/.gemini:/tmp/.gemini # Mount OAuth creds for Gemini CLI
     depends_on:
       postgres:
         condition: service_healthy
