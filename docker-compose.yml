@@ -56,6 +56,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       # GEMINI_API_KEY убран — CLI использует OAuth из /tmp/.config/gemini/
       - SYSTEM_LANGUAGE=ru
       - DEBUG=true
