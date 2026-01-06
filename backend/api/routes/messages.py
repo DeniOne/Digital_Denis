@@ -349,6 +349,9 @@ async def send_telegram_message(
         # Выбор агента на основе intent из RAG 2.0
         detected_intent = rag_result.get("intent", "general")
         
+        # DEBUG: Log detected intent
+        logger.info(f"🔍 DEBUG: detected_intent = '{detected_intent}' for message: {content[:50]}")
+        
         if detected_intent == "schedule":
             # Напоминания, события, задачи — используем schedule_agent
             from agents.schedule_agent import schedule_agent
