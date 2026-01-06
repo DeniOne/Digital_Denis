@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMemories } from "@/lib/hooks";
-import { MemoryItem, memoryApi } from "@/lib/api";
-import { mutate } from "swr";
+import { useMemories, useDeleteMemory } from "@/lib/hooks";
+import { MemoryItem } from "@/lib/api";
 
 const memoryTypes = [
     { value: 'all', label: 'Все типы' },
@@ -24,6 +23,8 @@ export default function MemoryExplorer() {
         topic_id: topic,
     });
 
+    const deleteMemoryMutation = useDeleteMemory();
+
     // API returns { items: [...], total: number }
     const memories = data?.items;
 
@@ -36,9 +37,7 @@ export default function MemoryExplorer() {
 
         setDeletingId(id);
         try {
-            await memoryApi.delete(id);
-            // Обновить список
-            mutate('/api/v1/memory');
+            await deleteMemoryMutation.mutateAsync(id);
         } catch (error) {
             console.error('Delete error:', error);
             alert('Ошибка при удалении');
