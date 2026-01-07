@@ -15,18 +15,20 @@ export default function ChatPage() {
     const { sessionId, setSessionId, isLoading, setIsLoading } = useAppStore();
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Scroll to bottom function
+    const scrollToBottom = (instant = false) => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+                top: scrollRef.current.scrollHeight,
+                behavior: instant ? 'instant' : 'smooth'
+            });
+        }
+    };
+
     useEffect(() => {
-        // Scroll to bottom when messages change
-        const scrollToBottom = () => {
-            if (scrollRef.current) {
-                scrollRef.current.scrollTo({
-                    top: scrollRef.current.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
-        };
-        // Small delay to ensure DOM is updated
-        setTimeout(scrollToBottom, 100);
+        // Scroll to bottom when messages change - instant on first load, smooth otherwise
+        const isFirstLoad = messages.length > 0;
+        setTimeout(() => scrollToBottom(isFirstLoad), 150);
     }, [messages]);
 
     // Load chat history on mount - always try to load
