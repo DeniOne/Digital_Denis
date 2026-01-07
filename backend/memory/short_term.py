@@ -101,8 +101,8 @@ class ShortTermMemory:
         await self.redis.rpush(key, json.dumps(message, ensure_ascii=False))
         await self.redis.expire(key, int(self.chat_ttl.total_seconds()))
         
-        # Keep only last 50 messages
-        await self.redis.ltrim(key, -50, -1)
+        # Keep only last 200 messages
+        await self.redis.ltrim(key, -200, -1)
     
     # ─────────────────────────────────────────────────────────────────────────
     # Working Buffer

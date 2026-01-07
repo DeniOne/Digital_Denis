@@ -16,9 +16,17 @@ export default function ChatPage() {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        // Scroll to bottom when messages change
+        const scrollToBottom = () => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTo({
+                    top: scrollRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        };
+        // Small delay to ensure DOM is updated
+        setTimeout(scrollToBottom, 100);
     }, [messages]);
 
     // Load chat history on mount - always try to load
@@ -27,6 +35,7 @@ export default function ChatPage() {
             try {
                 // Use sessionId if available, otherwise use 'default' - backend will redirect based on user
                 const data = await messagesApi.getHistory(sessionId || "default");
+                console.log("📊 Chat history loaded:", data.messages?.length, "messages"); // DEBUG
                 if (data.messages && data.messages.length > 0) {
                     setMessages(data.messages.map((msg: any) => ({
                         role: msg.role,
